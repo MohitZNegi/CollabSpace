@@ -24,5 +24,6 @@ namespace CollabSpace.Models
         public ICollection<DirectMessage> SentDirectMessages { get; set; } = new List<DirectMessage>();
         public ICollection<DirectMessage> ReceivedDirectMessages { get; set; } = new List<DirectMessage>();
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
 }
