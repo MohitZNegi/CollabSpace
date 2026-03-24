@@ -16,6 +16,7 @@ namespace CollabSpace.Data
         public DbSet<DirectMessage> DirectMessages => Set<DirectMessage>();
         public DbSet<Comment> Comments => Set<Comment>();
         public DbSet<Notification> Notifications => Set<Notification>();
+        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -167,6 +168,20 @@ namespace CollabSpace.Data
                     .HasForeignKey(n => n.RecipientUserId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+            // --- RefreshToken ---
+            modelBuilder.Entity<RefreshToken>(e =>
+            {
+                e.HasIndex(rt => rt.Token).IsUnique();
+                e.HasIndex(rt => rt.UserId);
+                e.Property(rt => rt.Token).HasMaxLength(200);
+                e.HasOne(rt => rt.User)
+                    .WithMany(u => u.RefreshTokens)
+                    .HasForeignKey(rt => rt.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
         }
+
+        
+
     }
 }
