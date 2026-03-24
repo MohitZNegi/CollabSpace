@@ -15,7 +15,7 @@ namespace CollabSpace.Models
         public DateTime? LastSeenAt { get; set; }
         public bool IsActive { get; set; } = true;
 
-
+        public ICollection<Workspace> OwnedWorkspaces { get; set; } = new List<Workspace>();
 
     }
 }
