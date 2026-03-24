@@ -19,5 +19,6 @@ namespace CollabSpace.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+        public ICollection<Comment> Comments { get; set; } = new List<Comment>();
     }
 }

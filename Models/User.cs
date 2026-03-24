@@ -20,6 +20,9 @@ namespace CollabSpace.Models
         public ICollection<Board> CreatedBoards { get; set; } = new List<Board>();
         public ICollection<Card> AssignedCards { get; set; } = new List<Card>();
         public ICollection<Card> CreatedCards { get; set; } = new List<Card>();
-
+        public ICollection<Message> SentMessages { get; set; } = new List<Message>();
+        public ICollection<DirectMessage> SentDirectMessages { get; set; } = new List<DirectMessage>();
+        public ICollection<DirectMessage> ReceivedDirectMessages { get; set; } = new List<DirectMessage>();
+        public ICollection<Comment> Comments { get; set; } = new List<Comment>();
     }
 }

@@ -16,5 +16,6 @@ namespace CollabSpace.Models
 
         public ICollection<WorkspaceMember> Members { get; set; } = new List<WorkspaceMember>();
         public ICollection<Board> Boards { get; set; } = new List<Board>();
+        public ICollection<Message> Messages { get; set; } = new List<Message>();
     }
 }
