@@ -16,6 +16,10 @@ namespace CollabSpace.Models
         public bool IsActive { get; set; } = true;
 
         public ICollection<Workspace> OwnedWorkspaces { get; set; } = new List<Workspace>();
+        public ICollection<WorkspaceMember> WorkspaceMemberships { get; set; } = new List<WorkspaceMember>();
+        public ICollection<Board> CreatedBoards { get; set; } = new List<Board>();
+        public ICollection<Card> AssignedCards { get; set; } = new List<Card>();
+        public ICollection<Card> CreatedCards { get; set; } = new List<Card>();
 
     }
 }

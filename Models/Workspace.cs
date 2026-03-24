@@ -15,6 +15,6 @@ namespace CollabSpace.Models
         public bool IsArchived { get; set; } = false;
 
         public ICollection<WorkspaceMember> Members { get; set; } = new List<WorkspaceMember>();
-
+        public ICollection<Board> Boards { get; set; } = new List<Board>();
     }
 }
