@@ -1,4 +1,5 @@
 ﻿using CollabSpace.Data;
+using CollabSpace.Exceptions;
 using CollabSpace.Models;
 using CollabSpace.Services;
 using Microsoft.EntityFrameworkCore;
@@ -58,7 +59,7 @@ namespace CollabSpace.Tests.Services
             var context = CreateContext();
             var service = new WorkspaceAuthService(context);
 
-            await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            await Assert.ThrowsAsync<ForbiddenException>(() =>
                 service.RequireMemberAsync(Guid.NewGuid(), Guid.NewGuid()));
         }
 
