@@ -1,4 +1,5 @@
 using CollabSpace.Data;
+using CollabSpace.Middleware;
 using CollabSpace.Models.Settings;
 using CollabSpace.Services;
 using CollabSpace.Services.Interfaces;
@@ -45,7 +46,11 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 // Register your services
+
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IWorkspaceAuthService, WorkspaceAuthService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -58,7 +63,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+// In the middleware pipeline, this must come FIRST
+// before UseAuthentication and UseAuthorization
+app.UseMiddleware<GlobalExceptionHandler>();
 app.UseAuthentication(); // must come before UseAuthorization
 app.UseAuthorization();
 app.MapControllers();
