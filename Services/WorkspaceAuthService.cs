@@ -1,5 +1,4 @@
 ﻿using CollabSpace.Data;
-using CollabSpace.Exceptions;
 using CollabSpace.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,16 +42,15 @@ namespace CollabSpace.Services
         public async Task RequireMemberAsync(Guid workspaceId, Guid userId)
         {
             if (!await IsMemberAsync(workspaceId, userId))
-                throw new ForbiddenException(
+                throw new UnauthorizedAccessException(
                     "You are not a member of this workspace.");
         }
 
         public async Task RequireLeadOrAboveAsync(Guid workspaceId, Guid userId)
         {
             if (!await IsLeadOrAboveAsync(workspaceId, userId))
-                throw new ForbiddenException(
+                throw new UnauthorizedAccessException(
                     "This action requires Lead or Owner role in this workspace.");
         }
-
     }
 }

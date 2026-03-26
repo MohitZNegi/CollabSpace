@@ -1,5 +1,4 @@
-﻿using CollabSpace.Exceptions;
-using System.Net;
+﻿using System.Net;
 using System.Text.Json;
 
 namespace CollabSpace.Middleware
@@ -8,7 +7,6 @@ namespace CollabSpace.Middleware
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<GlobalExceptionHandler> _logger;
-
 
         public GlobalExceptionHandler(RequestDelegate next,
             ILogger<GlobalExceptionHandler> logger)
@@ -40,7 +38,6 @@ namespace CollabSpace.Middleware
             var statusCode = exception switch
             {
                 UnauthorizedAccessException => HttpStatusCode.Unauthorized,
-                ForbiddenException => HttpStatusCode.Forbidden,
                 InvalidOperationException => HttpStatusCode.Conflict,
                 KeyNotFoundException => HttpStatusCode.NotFound,
                 ArgumentException => HttpStatusCode.BadRequest,
