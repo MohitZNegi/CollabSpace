@@ -1,71 +1,90 @@
-﻿using CollabSpace.Data;
+﻿using CollabSpace.Models.DTOs.WorkSpace;
 using CollabSpace.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CollabSpace.Controllers
 {
     [ApiController]
     [Route("api/v1/workspaces")]
-    [Authorize] // every endpoint in this controller requires authentication
+    [Authorize]
     public class WorkspaceController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IWorkspaceService _workspaceService;
         private readonly ICurrentUserService _currentUser;
-        private readonly IWorkspaceAuthService _workspaceAuth;
 
         public WorkspaceController(
-            AppDbContext context,
-            ICurrentUserService currentUser,
-            IWorkspaceAuthService workspaceAuth)
+            IWorkspaceService workspaceService,
+            ICurrentUserService currentUser)
         {
-            _context = context;
+            _workspaceService = workspaceService;
             _currentUser = currentUser;
-            _workspaceAuth = workspaceAuth;
         }
 
         // GET /api/v1/workspaces
-        // Returns all workspaces the current user belongs to
         [HttpGet]
         public async Task<IActionResult> GetMyWorkspaces()
         {
-            var userId = _currentUser.GetUserId();
-
-            var workspaces = await _context.WorkspaceMembers
-                .Where(wm => wm.UserId == userId)
-                .Include(wm => wm.Workspace)
-                .Select(wm => new
-                {
-                    wm.Workspace!.Id,
-                    wm.Workspace.Name,
-                    wm.Workspace.Description,
-                    wm.WorkspaceRole,
-                    wm.JoinedAt
-                })
-                .ToListAsync();
-
-            return Ok(workspaces);
+            var result = await _workspaceService
+                .GetMyWorkspacesAsync(_currentUser.GetUserId());
+            return Ok(result);
         }
 
         // GET /api/v1/workspaces/{id}
-        // Returns a single workspace — only if the user is a member
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetWorkspace(Guid id)
         {
-            var userId = _currentUser.GetUserId();
+            var result = await _workspaceService
+                .GetWorkspaceAsync(id, _currentUser.GetUserId());
+            return Ok(result);
+        }
 
-            // This throws UnauthorizedAccessException if not a member.
-            // The global exception handler converts it to a 401 response.
-            await _workspaceAuth.RequireMemberAsync(id, userId);
+        // POST /api/v1/workspaces
+        [HttpPost]
+        public async Task<IActionResult> CreateWorkspace(
+            [FromBody] CreateWorkspaceDto request)
+        {
+            var result = await _workspaceService
+                .CreateWorkspaceAsync(request, _currentUser.GetUserId());
+            return StatusCode(201, result);
+        }
 
-            var workspace = await _context.Workspaces
-                .FirstOrDefaultAsync(w => w.Id == id);
+        // POST /api/v1/workspaces/join
+        [HttpPost("join")]
+        public async Task<IActionResult> JoinWorkspace(
+            [FromBody] JoinWorkspaceDto request)
+        {
+            var result = await _workspaceService
+                .JoinByCodeAsync(request.InviteCode, _currentUser.GetUserId());
+            return Ok(result);
+        }
 
-            if (workspace == null)
-                throw new KeyNotFoundException("Workspace not found.");
+        // GET /api/v1/workspaces/{id}/members
+        [HttpGet("{id:guid}/members")]
+        public async Task<IActionResult> GetMembers(Guid id)
+        {
+            var result = await _workspaceService
+                .GetMembersAsync(id, _currentUser.GetUserId());
+            return Ok(result);
+        }
 
-            return Ok(workspace);
+        // PATCH /api/v1/workspaces/{id}/members/{userId}/role
+        [HttpPatch("{id:guid}/members/{userId:guid}/role")]
+        public async Task<IActionResult> AssignRole(
+            Guid id, Guid userId, [FromBody] AssignRoleDto request)
+        {
+            await _workspaceService.AssignRoleAsync(
+                id, userId, request.Role, _currentUser.GetUserId());
+            return NoContent();
+        }
+
+        // DELETE /api/v1/workspaces/{id}/members/{userId}
+        [HttpDelete("{id:guid}/members/{userId:guid}")]
+        public async Task<IActionResult> RemoveMember(Guid id, Guid userId)
+        {
+            await _workspaceService
+                .RemoveMemberAsync(id, userId, _currentUser.GetUserId());
+            return NoContent();
         }
     }
 }
