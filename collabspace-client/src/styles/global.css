@@ -1,0 +1,45 @@
+﻿@import './variables.css';
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+    font-size: var(--font-size-md);
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    line-height: 1.6;
+}
+
+button {
+    cursor: pointer;
+    font-family: inherit;
+}
+
+input {
+    font-family: inherit;
+    font-size: var(--font-size-md);
+}
+
+/* Base toast style */
+.custom-toast {
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+/* Success toast */
+.custom-toast-success {
+    background: #E8F5EE;
+    color: #1A6B3A;
+    border: 1px solid #1A6B3A;
+}
+
+/* Error toast */
+.custom-toast-error {
+    background: #FDE8E8;
+    color: #8B1A1A;
+    border: 1px solid #8B1A1A;
+}
