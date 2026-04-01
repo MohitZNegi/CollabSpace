@@ -1,12 +1,12 @@
 ﻿import { createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../api/axiosInstance';
 
+
 // createAsyncThunk handles the async lifecycle automatically.
 // It dispatches pending, fulfilled, and rejected actions based
 // on whether the promise resolves or rejects.
 // The first argument is the action type prefix.
 // The second argument is the async function (the payload creator).
-
 export const loginUser = createAsyncThunk(
     'auth/login',
     async (credentials, { rejectWithValue }) => {
@@ -49,10 +49,15 @@ export const registerUser = createAsyncThunk(
 
             return { accessToken, user };
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.error?.message
-                || 'Registration failed. Please try again.'
-            );
+            // Map specific backend messages to user-friendly ones.
+            const serverMessage = error.response?.data?.error || '';
+
+            let friendlyMessage = 'Registration failed. Please try again.';
+
+           if (serverMessage.includes('Username') || serverMessage.includes('username'))
+                friendlyMessage = 'That username is already taken. Please choose another one.';
+
+            return rejectWithValue(friendlyMessage);
         }
     }
 );

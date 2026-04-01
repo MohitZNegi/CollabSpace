@@ -4,7 +4,7 @@
 // Never call axios.get() directly in components.
 // Always use this instance so interceptors apply everywhere.
 const axiosInstance = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'https://localhost:7001/api/v1',
+    baseURL: import.meta.env.VITE_API_URL || 'https://localhost:5068/api/v1',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -35,11 +35,19 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        const isLoginRequest = error.config?.url?.includes('/auth/login')
+            || error.config?.url?.includes('/auth/register');
+
+        // Only redirect to login for 401s that are NOT from
+        // the auth endpoints themselves. A 401 from login just
+        // means wrong credentials, not an expired session.
+        if (error.response?.status === 401 && !isLoginRequest) {
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
             window.location.href = '/login';
         }
+
         return Promise.reject(error);
     }
 );
