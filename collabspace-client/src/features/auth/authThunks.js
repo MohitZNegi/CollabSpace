@@ -1,5 +1,6 @@
 ﻿import { createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../api/axiosInstance';
+import { startConnection} from '../../services/signalrService';
 
 
 // createAsyncThunk handles the async lifecycle automatically.
@@ -21,6 +22,10 @@ export const loginUser = createAsyncThunk(
             localStorage.setItem('accessToken', accessToken);
             localStorage.setItem('refreshToken', refreshToken);
             localStorage.setItem('user', JSON.stringify(user));
+
+            // Start the persistent SignalR connection after login.
+            // The connection stays alive for the entire session.
+            await startConnection();
 
             return { accessToken, user };
         } catch (error) {

@@ -1,5 +1,6 @@
 ﻿import { createSlice } from '@reduxjs/toolkit';
 import { loginUser, registerUser } from './authThunks';
+import { stopConnection } from '../../services/signalrService';
 
 // Read any persisted auth state from localStorage on app load.
 // This is how the session persists across page refreshes (US-03).
@@ -28,6 +29,8 @@ const authSlice = createSlice({
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
             localStorage.removeItem('user');
+            // Stop the SignalR connection when the user logs out.
+            stopConnection();
         },
         clearError: (state) => {
             state.error = null;

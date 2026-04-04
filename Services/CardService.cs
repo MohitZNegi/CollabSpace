@@ -9,11 +9,16 @@ namespace CollabSpace.Services
 {
     public class CardService : ICardService
     {
-        private readonly AppDbContext _context;
 
-        public CardService(AppDbContext context)
+        private readonly AppDbContext _context;
+        private readonly IBoardEventService _boardEvents;
+
+        public CardService(
+            AppDbContext context,
+            IBoardEventService boardEvents)
         {
             _context = context;
+            _boardEvents = boardEvents;
         }
 
         public async Task<List<CardResponseDto>> GetCardsAsync(
@@ -77,7 +82,14 @@ namespace CollabSpace.Services
 
             await _context.Entry(card).Reference(c => c.CreatedBy).LoadAsync();
 
-            return MapToDto(card);
+            var dto = MapToDto(card);
+
+            // Broadcast to all users currently viewing this board.
+            // They will see the new card appear without refreshing.
+            await _boardEvents.BroadcastCardCreatedAsync(
+                boardId.ToString(), dto);
+
+            return dto;
         }
 
         public async Task<CardResponseDto> UpdateCardAsync(
@@ -122,12 +134,16 @@ namespace CollabSpace.Services
 
             await _context.SaveChangesAsync();
 
-            // Reload the assignee navigation property after update
             if (card.AssignedToUserId.HasValue)
                 await _context.Entry(card)
                     .Reference(c => c.AssignedTo).LoadAsync();
 
-            return MapToDto(card);
+            var dto = MapToDto(card);
+
+            await _boardEvents.BroadcastCardUpdatedAsync(
+                card.BoardId.ToString(), dto);
+
+            return dto;
         }
 
         public async Task MoveCardAsync(
@@ -227,6 +243,17 @@ namespace CollabSpace.Services
             // Single SaveChangesAsync commits all position changes
             // atomically. Positions are never inconsistent.
             await _context.SaveChangesAsync();
+
+            // Broadcast a lightweight move event — just the essentials.
+            // No need to send the full card object for a position change.
+            await _boardEvents.BroadcastCardMovedAsync(
+                card.BoardId.ToString(), new
+                {
+                    CardId = cardId,
+                    Status = card.Status,
+                    Position = card.Position,
+                    BoardId = card.BoardId
+                });
         }
 
         public async Task DeleteCardAsync(
@@ -262,8 +289,14 @@ namespace CollabSpace.Services
 
             foreach (var c in cardsToShift) c.Position--;
 
+            var boardId = card.BoardId;
+
             _context.Cards.Remove(card);
             await _context.SaveChangesAsync();
+
+            await _boardEvents.BroadcastCardDeletedAsync(
+                boardId.ToString(), cardId);
+        
         }
 
         // ---------------------------------------------------------------
