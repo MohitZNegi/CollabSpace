@@ -4,6 +4,11 @@ using CollabSpace.Models;
 using CollabSpace.Models.DTOs.Card;
 using CollabSpace.Services;
 using Microsoft.EntityFrameworkCore;
+using Moq;
+using Xunit;
+using CollabSpace.Services.Interfaces;
+using System;
+using System.Threading.Tasks;
 
 namespace CollabSpace.Tests.Services
 {
@@ -15,6 +20,30 @@ namespace CollabSpace.Tests.Services
                 .UseInMemoryDatabase(Guid.NewGuid().ToString())
                 .Options;
             return new AppDbContext(options);
+        }
+
+        // Mock IBoardEventService
+        private static IBoardEventService CreateMockBoardEvents()
+        {
+            var mock = new Mock<IBoardEventService>();
+
+            mock.Setup(m => m.BroadcastCardCreatedAsync(
+                    It.IsAny<string>(), It.IsAny<object>()))
+                .Returns(Task.CompletedTask);
+
+            mock.Setup(m => m.BroadcastCardUpdatedAsync(
+                    It.IsAny<string>(), It.IsAny<object>()))
+                .Returns(Task.CompletedTask);
+
+            mock.Setup(m => m.BroadcastCardMovedAsync(
+                    It.IsAny<string>(), It.IsAny<object>()))
+                .Returns(Task.CompletedTask);
+
+            mock.Setup(m => m.BroadcastCardDeletedAsync(
+                    It.IsAny<string>(), It.IsAny<Guid>()))
+                .Returns(Task.CompletedTask);
+
+            return mock.Object;
         }
 
         private async Task<(Guid userId, Guid workspaceId, Guid boardId)>
@@ -31,6 +60,7 @@ namespace CollabSpace.Tests.Services
                 Email = "test@test.com",
                 PasswordHash = "hash"
             });
+
             context.WorkspaceMembers.Add(new WorkspaceMember
             {
                 Id = Guid.NewGuid(),
@@ -38,6 +68,7 @@ namespace CollabSpace.Tests.Services
                 WorkspaceId = workspaceId,
                 WorkspaceRole = "Owner"
             });
+
             context.Boards.Add(new Board
             {
                 Id = boardId,
@@ -55,7 +86,7 @@ namespace CollabSpace.Tests.Services
         {
             var context = CreateContext();
             var (userId, _, boardId) = await SeedBoardAsync(context);
-            var service = new CardService(context);
+            var service = new CardService(context, CreateMockBoardEvents());
 
             var result = await service.CreateCardAsync(
                 boardId,
@@ -71,12 +102,14 @@ namespace CollabSpace.Tests.Services
         {
             var context = CreateContext();
             var (userId, _, boardId) = await SeedBoardAsync(context);
-            var service = new CardService(context);
+            var service = new CardService(context, CreateMockBoardEvents());
 
             await service.CreateCardAsync(boardId,
                 new CreateCardDto { Title = "Card 1" }, userId);
+
             await service.CreateCardAsync(boardId,
                 new CreateCardDto { Title = "Card 2" }, userId);
+
             var third = await service.CreateCardAsync(boardId,
                 new CreateCardDto { Title = "Card 3" }, userId);
 
@@ -88,7 +121,7 @@ namespace CollabSpace.Tests.Services
         {
             var context = CreateContext();
             var (userId, _, boardId) = await SeedBoardAsync(context);
-            var service = new CardService(context);
+            var service = new CardService(context, CreateMockBoardEvents());
 
             var card = await service.CreateCardAsync(boardId,
                 new CreateCardDto { Title = "Task" }, userId);
@@ -99,6 +132,7 @@ namespace CollabSpace.Tests.Services
                 userId);
 
             var updated = await context.Cards.FindAsync(card.Id);
+
             Assert.Equal("InProgress", updated!.Status);
             Assert.Equal(0, updated.Position);
         }
@@ -109,8 +143,8 @@ namespace CollabSpace.Tests.Services
             var context = CreateContext();
             var (ownerId, workspaceId, boardId) = await SeedBoardAsync(context);
 
-            // Add a regular member
             var memberId = Guid.NewGuid();
+
             context.Users.Add(new User
             {
                 Id = memberId,
@@ -118,6 +152,7 @@ namespace CollabSpace.Tests.Services
                 Email = "member@test.com",
                 PasswordHash = "hash"
             });
+
             context.WorkspaceMembers.Add(new WorkspaceMember
             {
                 Id = Guid.NewGuid(),
@@ -125,9 +160,11 @@ namespace CollabSpace.Tests.Services
                 WorkspaceId = workspaceId,
                 WorkspaceRole = "Member"
             });
+
             await context.SaveChangesAsync();
 
-            var service = new CardService(context);
+            var service = new CardService(context, CreateMockBoardEvents());
+
             var card = await service.CreateCardAsync(boardId,
                 new CreateCardDto { Title = "Task" }, ownerId);
 
