@@ -1,6 +1,8 @@
 ﻿import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '../features/auth/authSlice';
 import boardReducer from '../features/board/boardSlice';
+import chatReducer from '../features/chat/chatSlice';
+
 
 const store = configureStore({
     reducer: {
@@ -8,6 +10,7 @@ const store = configureStore({
         // state.auth will hold everything from authSlice.
         auth: authReducer,
         board: boardReducer,
+        chat: chatReducer,
     },
 });
 

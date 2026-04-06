@@ -70,6 +70,8 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 // Register services
+builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IChatEventService, ChatEventService>();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IBoardEventService, BoardEventService>();
 builder.Services.AddScoped<IBoardService, BoardService>();
