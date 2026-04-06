@@ -81,5 +81,36 @@ namespace CollabSpace.Hubs
             await Groups.RemoveFromGroupAsync(
                 Context.ConnectionId, $"workspace:{workspaceId}");
         }
+
+        // Client calls this while the user is typing in workspace chat.
+        // The hub broadcasts to everyone else in the workspace group.
+        // "Others" excludes the caller — you do not send typing
+        // indicators to the person who is actually typing.
+        public async Task SendTypingIndicator(
+            string workspaceId, string username)
+        {
+            await Clients.OthersInGroup($"workspace:{workspaceId}")
+                .SendAsync("UserTyping", new
+                {
+                    UserId = Context.UserIdentifier,
+                    Username = username,
+                    Context = "workspace",
+                    ContextId = workspaceId
+                });
+        }
+
+        // Client calls this while typing in a DM conversation.
+        public async Task SendDirectTypingIndicator(
+            string recipientUserId, string username)
+        {
+            await Clients.User(recipientUserId)
+                .SendAsync("UserTyping", new
+                {
+                    UserId = Context.UserIdentifier,
+                    Username = username,
+                    Context = "direct",
+                    ContextId = Context.UserIdentifier
+                });
+        }
     }
 }
