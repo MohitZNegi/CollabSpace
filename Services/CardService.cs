@@ -12,13 +12,16 @@ namespace CollabSpace.Services
 
         private readonly AppDbContext _context;
         private readonly IBoardEventService _boardEvents;
+        private readonly INotificationService _notifications;
 
         public CardService(
             AppDbContext context,
-            IBoardEventService boardEvents)
+            IBoardEventService boardEvents,
+            INotificationService notifications)
         {
             _context = context;
             _boardEvents = boardEvents;
+            _notifications = notifications;
         }
 
         public async Task<List<CardResponseDto>> GetCardsAsync(
@@ -142,6 +145,33 @@ namespace CollabSpace.Services
 
             await _boardEvents.BroadcastCardUpdatedAsync(
                 card.BoardId.ToString(), dto);
+
+            // Notify the card creator if someone else updated it
+            if (card.CreatedByUserId != requestingUserId)
+            {
+                var requester = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Id == requestingUserId);
+
+                await _notifications.NotifyCardUpdatedAsync(
+                    card.CreatedByUserId,
+                    card.Title,
+                    requester?.Username ?? "Someone",
+                    cardId);
+            }
+
+            // Notify the assignee if the card was just assigned to them
+            if (request.AssignedToUserId.HasValue
+                && request.AssignedToUserId != requestingUserId)
+            {
+                var requester = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Id == requestingUserId);
+
+                await _notifications.NotifyCardAssignedAsync(
+                    request.AssignedToUserId.Value,
+                    card.Title,
+                    requester?.Username ?? "Someone",
+                    cardId);
+            }
 
             return dto;
         }
