@@ -1,5 +1,3 @@
-using System;
-
 namespace CollabSpace.Models
 {
     public class Notification
