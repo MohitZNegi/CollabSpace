@@ -3,8 +3,12 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import BoardPage from './pages/BoardPage';
+import { useNotificationSignalR } from './hooks/useNotificationSignalR';
+
 
 function App() {
+    // Active for the entire session regardless of current page
+    useNotificationSignalR();
     return (
         <BrowserRouter>
             <Routes>
