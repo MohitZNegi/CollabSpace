@@ -2,6 +2,7 @@
 import authReducer from '../features/auth/authSlice';
 import boardReducer from '../features/board/boardSlice';
 import chatReducer from '../features/chat/chatSlice';
+import notificationReducer from '../features/notification/notificationSlice';
 
 
 const store = configureStore({
@@ -11,6 +12,7 @@ const store = configureStore({
         auth: authReducer,
         board: boardReducer,
         chat: chatReducer,
+        notifications: notificationReducer,
     },
 });
 
