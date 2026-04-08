@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import {
     setNotifications,
     allMarkedAsRead
-} from '../features/notifications/notificationSlice';
+} from '../features/notification/notificationSlice';
 import axiosInstance from '../api/axiosInstance';
 import '../styles/components/notifications.css';
 

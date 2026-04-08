@@ -1,0 +1,259 @@
+﻿/* ── Page layout ─────────────────────────────────────────────── */
+.workspace-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: var(--color-bg);
+}
+
+/* ── Header ──────────────────────────────────────────────────── */
+.workspace-header {
+    background: var(--color-navy);
+    padding: 0 var(--spacing-xl);
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+}
+
+.workspace-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.workspace-back-btn {
+    background: none;
+    border: none;
+    color: var(--color-light-blue);
+    font-size: var(--font-size-sm);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: color 0.2s;
+    padding: 0;
+}
+
+    .workspace-back-btn:hover {
+        color: var(--color-white);
+    }
+
+.workspace-header-name {
+    color: var(--color-white);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+}
+
+.workspace-header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+/* ── Main content area ───────────────────────────────────────── */
+.workspace-main {
+    flex: 1;
+    padding: var(--spacing-xl);
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* ── Invite code banner ──────────────────────────────────────── */
+.invite-banner {
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--shadow-card);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    border-left: 4px solid var(--color-blue);
+}
+
+.invite-banner-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    margin-bottom: 0.2rem;
+}
+
+.invite-code {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--color-navy);
+    letter-spacing: 0.2em;
+    font-family: monospace;
+}
+
+.invite-copy-btn {
+    background: var(--color-navy);
+    color: var(--color-white);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+}
+
+    .invite-copy-btn:hover {
+        background-color: var(--color-blue);
+    }
+
+/* ── Boards grid ─────────────────────────────────────────────── */
+.boards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+/* ── Board card ──────────────────────────────────────────────── */
+.board-card {
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-card);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    border: 1px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    min-height: 120px;
+}
+
+    .board-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        border-color: var(--color-light-blue);
+    }
+
+.board-card-name {
+    color: var(--color-navy);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    flex: 1;
+}
+
+.board-card-meta {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+/* Create board card — same size as board cards */
+.board-card-create {
+    background: transparent;
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    min-height: 120px;
+    transition: border-color 0.2s, background-color 0.2s;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+}
+
+    .board-card-create:hover {
+        border-color: var(--color-blue);
+        background-color: var(--color-accent, #f0f5ff);
+        color: var(--color-blue);
+    }
+
+.board-card-create-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+/* ── Members section ─────────────────────────────────────────── */
+.members-section {
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-card);
+    margin-top: var(--spacing-xl);
+}
+
+.members-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: var(--spacing-md);
+}
+
+.member-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--color-bg);
+}
+
+    .member-row:last-child {
+        border-bottom: none;
+    }
+
+.member-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--color-blue);
+    color: var(--color-white);
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.member-info {
+    flex: 1;
+}
+
+.member-username {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.member-joined {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.member-role-badge {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.role-owner {
+    background: #EDE9FE;
+    color: #5B21B6;
+}
+
+.role-lead {
+    background: var(--color-light-blue);
+    color: var(--color-navy);
+}
+
+.role-member {
+    background: var(--color-bg);
+    color: var(--color-text-muted);
+}

@@ -1,6 +1,6 @@
 ﻿import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { notificationReceived } from '../features/notifications/notificationSlice';
+import { notificationReceived } from '../features/notification/notificationSlice';
 import { onEvent } from '../services/signalrService';
 
 // This hook is registered at the app level, not per-page.
