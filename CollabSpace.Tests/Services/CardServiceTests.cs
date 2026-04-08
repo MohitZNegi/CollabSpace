@@ -46,6 +46,7 @@ namespace CollabSpace.Tests.Services
             return mock.Object;
         }
 
+
         private async Task<(Guid userId, Guid workspaceId, Guid boardId)>
             SeedBoardAsync(AppDbContext context)
         {
@@ -86,7 +87,7 @@ namespace CollabSpace.Tests.Services
         {
             var context = CreateContext();
             var (userId, _, boardId) = await SeedBoardAsync(context);
-            var service = new CardService(context, CreateMockBoardEvents());
+            var service = new CardService(context, CreateMockBoardEvents(), CreateMockNotifications());
 
             var result = await service.CreateCardAsync(
                 boardId,
@@ -102,7 +103,7 @@ namespace CollabSpace.Tests.Services
         {
             var context = CreateContext();
             var (userId, _, boardId) = await SeedBoardAsync(context);
-            var service = new CardService(context, CreateMockBoardEvents());
+            var service = new CardService(context, CreateMockBoardEvents(), CreateMockNotifications());
 
             await service.CreateCardAsync(boardId,
                 new CreateCardDto { Title = "Card 1" }, userId);
@@ -121,7 +122,7 @@ namespace CollabSpace.Tests.Services
         {
             var context = CreateContext();
             var (userId, _, boardId) = await SeedBoardAsync(context);
-            var service = new CardService(context, CreateMockBoardEvents());
+            var service = new CardService(context, CreateMockBoardEvents(), CreateMockNotifications());
 
             var card = await service.CreateCardAsync(boardId,
                 new CreateCardDto { Title = "Task" }, userId);
@@ -163,13 +164,30 @@ namespace CollabSpace.Tests.Services
 
             await context.SaveChangesAsync();
 
-            var service = new CardService(context, CreateMockBoardEvents());
+            var service = new CardService(context, CreateMockBoardEvents(), CreateMockNotifications());
 
             var card = await service.CreateCardAsync(boardId,
                 new CreateCardDto { Title = "Task" }, ownerId);
 
             await Assert.ThrowsAsync<ForbiddenException>(() =>
                 service.DeleteCardAsync(card.Id, memberId));
+        }
+
+        private static INotificationService CreateMockNotifications()
+        {
+            var mock = new Mock<INotificationService>();
+
+            mock.Setup(m => m.NotifyCardUpdatedAsync(
+                    It.IsAny<Guid>(), It.IsAny<string>(),
+                    It.IsAny<string>(), It.IsAny<Guid>()))
+                .Returns(Task.CompletedTask);
+
+            mock.Setup(m => m.NotifyCardAssignedAsync(
+                    It.IsAny<Guid>(), It.IsAny<string>(),
+                    It.IsAny<string>(), It.IsAny<Guid>()))
+                .Returns(Task.CompletedTask);
+
+            return mock.Object;
         }
     }
 }

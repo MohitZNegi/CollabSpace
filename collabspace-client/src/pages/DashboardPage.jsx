@@ -5,6 +5,8 @@ import toast from 'react-hot-toast';
 import { logout } from '../features/auth/authSlice';
 import axiosInstance from '../api/axiosInstance';
 import '../styles/components/dashboard.css';
+import NotificationBell from '../components/NotificationBell';
+
 
 function DashboardPage() {
     const { user } = useSelector((state) => state.auth);
@@ -112,6 +114,7 @@ function DashboardPage() {
                 <div className="nav-right">
                     <span className="nav-username">{user?.username}</span>
                     <span className="nav-role-badge">{user?.globalRole}</span>
+                    <NotificationBell />
                     <button className="nav-logout-btn" onClick={handleLogout}>
                         Sign out
                     </button>
