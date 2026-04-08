@@ -4,6 +4,8 @@ import DashboardPage from './pages/DashboardPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import BoardPage from './pages/BoardPage';
 import { useNotificationSignalR } from './hooks/useNotificationSignalR';
+import WorkspacePage from './pages/WorkspacePage';
+
 
 
 function App() {
@@ -19,6 +21,8 @@ function App() {
                 <Route element={<ProtectedRoute />}>
                     <Route path="/dashboard" element={<DashboardPage />} />
                 </Route>
+                <Route path="/workspaces/:workspaceId"
+                    element={<WorkspacePage />} />
                 <Route
                     path="/workspaces/:workspaceId/boards/:boardId"
                     element={<BoardPage />}
