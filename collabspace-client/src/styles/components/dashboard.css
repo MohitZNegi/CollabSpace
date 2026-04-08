@@ -1,0 +1,277 @@
+﻿/* ── Layout ─────────────────────────────────────────────────── */
+.dashboard-container {
+    min-height: 100vh;
+    background-color: var(--color-bg);
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Navigation bar ─────────────────────────────────────────── */
+.dashboard-nav {
+    background-color: var(--color-navy);
+    padding: 0 var(--spacing-xl);
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.nav-brand {
+    color: var(--color-white);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.nav-username {
+    color: var(--color-light-blue);
+    font-size: var(--font-size-sm);
+}
+
+.nav-role-badge {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--color-light-blue);
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nav-logout-btn {
+    background-color: transparent;
+    border: 1px solid rgba(168, 200, 232, 0.4);
+    color: var(--color-light-blue);
+    padding: 0.4rem 0.9rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    transition: all 0.2s;
+}
+
+    .nav-logout-btn:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: var(--color-light-blue);
+        color: var(--color-white);
+    }
+
+/* ── Main content ────────────────────────────────────────────── */
+.dashboard-main {
+    flex: 1;
+    padding: var(--spacing-xl);
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* ── Welcome banner ─────────────────────────────────────────── */
+.dashboard-welcome {
+    background-color: var(--color-white);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--shadow-card);
+    border-left: 4px solid var(--color-blue);
+}
+
+    .dashboard-welcome h2 {
+        color: var(--color-navy);
+        font-size: var(--font-size-xl);
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .dashboard-welcome p {
+        color: var(--color-text-muted);
+        font-size: var(--font-size-md);
+    }
+
+/* ── Section header ─────────────────────────────────────────── */
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+}
+
+.section-title {
+    color: var(--color-navy);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+}
+
+/* ── Primary action button ───────────────────────────────────── */
+.btn-primary {
+    background-color: var(--color-navy);
+    color: var(--color-white);
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+    .btn-primary:hover {
+        background-color: var(--color-blue);
+    }
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--color-blue);
+    border: 1px solid var(--color-blue);
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+    .btn-secondary:hover {
+        background-color: var(--color-light-blue);
+    }
+
+/* ── Workspace grid ─────────────────────────────────────────── */
+.workspace-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+/* ── Workspace card ─────────────────────────────────────────── */
+.workspace-card {
+    background-color: var(--color-white);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-card);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    border: 1px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+    .workspace-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        border-color: var(--color-light-blue);
+    }
+
+.workspace-card-name {
+    color: var(--color-navy);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+}
+
+.workspace-card-desc {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    flex: 1;
+}
+
+.workspace-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-bg);
+}
+
+.workspace-role-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.role-owner {
+    background-color: #EDE9FE;
+    color: #5B21B6;
+}
+
+.role-lead {
+    background-color: var(--color-light-blue);
+    color: var(--color-navy);
+}
+
+.role-member {
+    background-color: var(--color-bg);
+    color: var(--color-text-muted);
+}
+
+/* ── Empty state ────────────────────────────────────────────── */
+.empty-state {
+    background-color: var(--color-white);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-2xl);
+    text-align: center;
+    box-shadow: var(--shadow-card);
+}
+
+    .empty-state p {
+        color: var(--color-text-muted);
+        margin-bottom: var(--spacing-md);
+    }
+
+/* ── Modal overlay ───────────────────────────────────────────── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.modal {
+    background-color: var(--color-white);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-xl);
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+    .modal h3 {
+        color: var(--color-navy);
+        font-size: var(--font-size-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.modal-input {
+    padding: 0.75rem var(--spacing-md);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    font-size: var(--font-size-md);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+    .modal-input:focus {
+        border-color: var(--color-blue);
+    }
+
+.modal-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+    margin-top: var(--spacing-md);
+}
