@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import axiosInstance from '../../api/axiosInstance';
+import CommentSection from './CommentSection';
+
 
 function CardDetailModal({ card, onClose, onUpdated }) {
     const [title, setTitle] = useState(card.title);
@@ -70,6 +72,7 @@ function CardDetailModal({ card, onClose, onUpdated }) {
                                 rows={4}
                             />
                         </div>
+                        <CommentSection cardId={card.id} />
                     </div>
 
                     <div className="card-modal-sidebar">
