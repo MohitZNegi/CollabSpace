@@ -1,0 +1,180 @@
+﻿/* ── Comments section ────────────────────────────────────────── */
+.comments-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.comments-title {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+/* ── Individual comment ──────────────────────────────────────── */
+.comment-item {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+}
+
+    /* Indent replies visually to show nesting */
+    .comment-item.reply {
+        margin-left: 2rem;
+        padding-left: 0.75rem;
+        border-left: 2px solid var(--color-border);
+    }
+
+.comment-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: var(--color-blue);
+    color: var(--color-white);
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.comment-body {
+    flex: 1;
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.comment-username {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-navy);
+}
+
+.comment-time {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+}
+
+.comment-edited-label {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+.comment-content {
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* ── Comment actions (reply, edit, delete) ───────────────────── */
+.comment-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: 0.3rem;
+}
+
+.comment-action-btn {
+    background: none;
+    border: none;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    padding: 0;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+    .comment-action-btn:hover {
+        color: var(--color-blue);
+    }
+
+    .comment-action-btn.delete:hover {
+        color: #E24B4A;
+    }
+
+/* ── Reply / edit input ──────────────────────────────────────── */
+.comment-reply-form {
+    margin-top: 0.5rem;
+    margin-left: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.comment-input-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.comment-textarea {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    line-height: 1.4;
+    transition: border-color 0.2s;
+    min-height: 70px;
+}
+
+    .comment-textarea:focus {
+        border-color: var(--color-blue);
+    }
+
+/* ── New top-level comment input ─────────────────────────────── */
+.new-comment-form {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    margin-top: var(--spacing-sm);
+}
+
+.new-comment-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: var(--color-navy);
+    color: var(--color-white);
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.new-comment-input-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.comment-empty {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: var(--spacing-md) 0;
+}
