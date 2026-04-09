@@ -3,6 +3,7 @@ import authReducer from '../features/auth/authSlice';
 import boardReducer from '../features/board/boardSlice';
 import chatReducer from '../features/chat/chatSlice';
 import notificationReducer from '../features/notification/notificationSlice';
+import commentReducer from '../features/comments/commentSlice';
 
 
 const store = configureStore({
@@ -13,6 +14,7 @@ const store = configureStore({
         board: boardReducer,
         chat: chatReducer,
         notifications: notificationReducer,
+        comments: commentReducer,
     },
 });
 
