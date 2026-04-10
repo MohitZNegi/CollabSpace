@@ -17,6 +17,7 @@ namespace CollabSpace.Data
         public DbSet<Comment> Comments => Set<Comment>();
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+        public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -179,7 +180,26 @@ namespace CollabSpace.Data
                     .HasForeignKey(rt => rt.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            modelBuilder.Entity<ActivityLog>(e =>
+            {
+                e.HasIndex(a => a.WorkspaceId);
+                e.HasIndex(a => a.CreatedAt);
+                e.HasIndex(a => a.ActorId);
+                e.Property(a => a.ActionType).HasMaxLength(50);
+                e.Property(a => a.Description).HasMaxLength(500);
+                e.Property(a => a.EntityType).HasMaxLength(50);
+                e.HasOne(a => a.Workspace)
+                    .WithMany()
+                    .HasForeignKey(a => a.WorkspaceId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(a => a.Actor)
+                    .WithMany()
+                    .HasForeignKey(a => a.ActorId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
         }
+
 
         
 
