@@ -21,7 +21,16 @@ namespace CollabSpace.Tests.Services
                 .Options;
             return new AppDbContext(options);
         }
-
+        private static IActivityService CreateMockActivity()
+        {
+            var mock = new Mock<IActivityService>();
+            mock.Setup(m => m.RecordAsync(
+                    It.IsAny<Guid>(), It.IsAny<Guid>(),
+                    It.IsAny<string>(), It.IsAny<string>(),
+                    It.IsAny<Guid?>(), It.IsAny<string?>()))
+                .Returns(Task.CompletedTask);
+            return mock.Object;
+        }
         // Mock IBoardEventService
         private static IBoardEventService CreateMockBoardEvents()
         {
@@ -87,7 +96,7 @@ namespace CollabSpace.Tests.Services
         {
             var context = CreateContext();
             var (userId, _, boardId) = await SeedBoardAsync(context);
-            var service = new CardService(context, CreateMockBoardEvents(), CreateMockNotifications());
+            var service = new CardService(context, CreateMockBoardEvents(), CreateMockNotifications(), CreateMockActivity());
 
             var result = await service.CreateCardAsync(
                 boardId,
@@ -103,7 +112,7 @@ namespace CollabSpace.Tests.Services
         {
             var context = CreateContext();
             var (userId, _, boardId) = await SeedBoardAsync(context);
-            var service = new CardService(context, CreateMockBoardEvents(), CreateMockNotifications());
+            var service = new CardService(context, CreateMockBoardEvents(), CreateMockNotifications(), CreateMockActivity());
 
             await service.CreateCardAsync(boardId,
                 new CreateCardDto { Title = "Card 1" }, userId);
@@ -122,7 +131,7 @@ namespace CollabSpace.Tests.Services
         {
             var context = CreateContext();
             var (userId, _, boardId) = await SeedBoardAsync(context);
-            var service = new CardService(context, CreateMockBoardEvents(), CreateMockNotifications());
+            var service = new CardService(context, CreateMockBoardEvents(), CreateMockNotifications(), CreateMockActivity());
 
             var card = await service.CreateCardAsync(boardId,
                 new CreateCardDto { Title = "Task" }, userId);
@@ -164,7 +173,7 @@ namespace CollabSpace.Tests.Services
 
             await context.SaveChangesAsync();
 
-            var service = new CardService(context, CreateMockBoardEvents(), CreateMockNotifications());
+            var service = new CardService(context, CreateMockBoardEvents(), CreateMockNotifications(), CreateMockActivity());
 
             var card = await service.CreateCardAsync(boardId,
                 new CreateCardDto { Title = "Task" }, ownerId);

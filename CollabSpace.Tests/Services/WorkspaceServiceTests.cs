@@ -3,7 +3,9 @@ using CollabSpace.Exceptions;
 using CollabSpace.Models;
 using CollabSpace.Models.DTOs.WorkSpace;
 using CollabSpace.Services;
+using CollabSpace.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 
 namespace CollabSpace.Tests.Services
 {
@@ -17,6 +19,16 @@ namespace CollabSpace.Tests.Services
             return new AppDbContext(options);
         }
 
+        private static IActivityService CreateMockActivity()
+        {
+            var mock = new Mock<IActivityService>();
+            mock.Setup(m => m.RecordAsync(
+                    It.IsAny<Guid>(), It.IsAny<Guid>(),
+                    It.IsAny<string>(), It.IsAny<string>(),
+                    It.IsAny<Guid?>(), It.IsAny<string?>()))
+                .Returns(Task.CompletedTask);
+            return mock.Object;
+        }
         // Seeds a user into the in-memory database and returns their Id.
         private async Task<Guid> SeedUserAsync(AppDbContext context,
             string username = "testuser")
@@ -39,7 +51,7 @@ namespace CollabSpace.Tests.Services
         {
             var context = CreateContext();
             var ownerId = await SeedUserAsync(context);
-            var service = new WorkspaceService(context);
+            var service = new WorkspaceService(context, CreateMockActivity());
 
             var result = await service.CreateWorkspaceAsync(
                 new CreateWorkspaceDto { Name = "My Team" }, ownerId);
@@ -62,7 +74,7 @@ namespace CollabSpace.Tests.Services
             var context = CreateContext();
             var ownerId = await SeedUserAsync(context, "owner");
             var joinerId = await SeedUserAsync(context, "joiner");
-            var service = new WorkspaceService(context);
+            var service = new WorkspaceService(context, CreateMockActivity()    );
 
             var workspace = await service.CreateWorkspaceAsync(
                 new CreateWorkspaceDto { Name = "Team" }, ownerId);
@@ -80,7 +92,7 @@ namespace CollabSpace.Tests.Services
         {
             var context = CreateContext();
             var ownerId = await SeedUserAsync(context, "owner");
-            var service = new WorkspaceService(context);
+            var service = new WorkspaceService(context, CreateMockActivity()    );
 
             var workspace = await service.CreateWorkspaceAsync(
                 new CreateWorkspaceDto { Name = "Team" }, ownerId);
@@ -99,7 +111,7 @@ namespace CollabSpace.Tests.Services
         {
             var context = CreateContext();
             var userId = await SeedUserAsync(context);
-            var service = new WorkspaceService(context);
+            var service = new WorkspaceService(context, CreateMockActivity());
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
                 service.JoinByCodeAsync("BADCODE", userId));
@@ -111,7 +123,7 @@ namespace CollabSpace.Tests.Services
             var context = CreateContext();
             var ownerId = await SeedUserAsync(context, "owner");
             var leadId = await SeedUserAsync(context, "lead");
-            var service = new WorkspaceService(context);
+            var service = new WorkspaceService(context  , CreateMockActivity());
 
             var workspace = await service.CreateWorkspaceAsync(
                 new CreateWorkspaceDto { Name = "Team" }, ownerId);
@@ -130,7 +142,7 @@ namespace CollabSpace.Tests.Services
             var context = CreateContext();
             var ownerId = await SeedUserAsync(context, "owner");
             var memberId = await SeedUserAsync(context, "member");
-            var service = new WorkspaceService(context);
+            var service = new WorkspaceService(context, CreateMockActivity());
 
             var workspace = await service.CreateWorkspaceAsync(
                 new CreateWorkspaceDto { Name = "Team" }, ownerId);
