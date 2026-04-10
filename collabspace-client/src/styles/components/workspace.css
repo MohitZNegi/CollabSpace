@@ -257,3 +257,202 @@
     background: var(--color-bg);
     color: var(--color-text-muted);
 }
+/* ── Dashboard stats bar ─────────────────────────────────────── */
+.stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.stat-card {
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-card);
+    text-align: center;
+    border-top: 3px solid transparent;
+}
+
+    .stat-card.todo {
+        border-top-color: #7C3AED;
+    }
+
+    .stat-card.inprogress {
+        border-top-color: #D97706;
+    }
+
+    .stat-card.done {
+        border-top-color: #059669;
+    }
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-navy);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ── Activity feed ───────────────────────────────────────────── */
+.activity-feed {
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    margin-bottom: var(--spacing-xl);
+}
+
+.activity-feed-header {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    padding: 0.75rem var(--spacing-lg);
+    border-bottom: 1px solid var(--color-bg);
+    transition: background-color 0.15s;
+}
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-item:hover {
+        background-color: var(--color-bg);
+    }
+
+.activity-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: var(--color-blue);
+    color: var(--color-white);
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+    /* Color each activity type differently */
+    .activity-avatar.CardCreated {
+        background-color: #059669;
+    }
+
+    .activity-avatar.CardMoved {
+        background-color: #D97706;
+    }
+
+    .activity-avatar.CardUpdated {
+        background-color: #2E5FA3;
+    }
+
+    .activity-avatar.CommentAdded {
+        background-color: #7C3AED;
+    }
+
+    .activity-avatar.MemberJoined {
+        background-color: #0891B2;
+    }
+
+    .activity-avatar.BoardCreated {
+        background-color: #1B2A4A;
+    }
+
+    .activity-avatar.MessageSent {
+        background-color: #6B7280;
+    }
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-description {
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+    line-height: 1.4;
+    margin: 0;
+}
+
+.activity-time {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-top: 0.2rem;
+    display: block;
+}
+
+.activity-empty {
+    padding: var(--spacing-xl);
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+}
+
+/* ── Active members strip ────────────────────────────────────── */
+.active-members-strip {
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    box-shadow: var(--shadow-card);
+    margin-bottom: var(--spacing-xl);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.active-members-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.active-member-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--color-bg);
+    border-radius: 20px;
+    padding: 0.3rem 0.7rem 0.3rem 0.3rem;
+    font-size: 0.8rem;
+    color: var(--color-text);
+}
+
+.active-member-chip-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: var(--color-blue);
+    color: var(--color-white);
+    font-size: 0.65rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.online-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #059669;
+    flex-shrink: 0;
+}

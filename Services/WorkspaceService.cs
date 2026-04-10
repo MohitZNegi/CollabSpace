@@ -1,19 +1,24 @@
 ﻿using CollabSpace.Data;
 using CollabSpace.Exceptions;
 using CollabSpace.Models;
+using CollabSpace.Models.Constants;
 using CollabSpace.Models.DTOs.WorkSpace;
 using CollabSpace.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 namespace CollabSpace.Services
 {
     public class WorkspaceService : IWorkspaceService
     {
         private readonly AppDbContext _context;
+        private readonly IActivityService _activity;
 
-        public WorkspaceService(AppDbContext context)
+        public WorkspaceService(AppDbContext context,
+            IActivityService activity)
         {
             _context = context;
+            _activity = activity;
         }
 
         public async Task<WorkspaceResponseDto> CreateWorkspaceAsync(
@@ -139,6 +144,13 @@ namespace CollabSpace.Services
 
             _context.WorkspaceMembers.Add(membership);
             await _context.SaveChangesAsync();
+
+            _ = _activity.RecordAsync(
+            workspace.Id, userId,
+            ActivityTypes.MemberJoined,
+            $"{(await _context.Users.FindAsync(userId))?.Username} " +
+            $"joined {workspace.Name}",
+            workspace.Id, "Workspace");
 
             return MapToResponseDto(workspace, workspace.Owner!.Username);
         }

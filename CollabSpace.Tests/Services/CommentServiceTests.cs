@@ -19,6 +19,16 @@ namespace CollabSpace.Tests.Services
             return new AppDbContext(options);
         }
 
+        private static IActivityService CreateMockActivity()
+        {
+            var mock = new Mock<IActivityService>();
+            mock.Setup(m => m.RecordAsync(
+                    It.IsAny<Guid>(), It.IsAny<Guid>(),
+                    It.IsAny<string>(), It.IsAny<string>(),
+                    It.IsAny<Guid?>(), It.IsAny<string?>()))
+                .Returns(Task.CompletedTask);
+            return mock.Object;
+        }
         private static INotificationService CreateMockNotifications()
         {
             var mock = new Mock<INotificationService>();
@@ -84,7 +94,7 @@ namespace CollabSpace.Tests.Services
             var context = CreateContext();
             var (userId, cardId, _) = await SeedCardAsync(context);
             var service = new CommentService(context,
-                CreateMockNotifications());
+                CreateMockNotifications(), CreateMockActivity());
 
             var result = await service.CreateCommentAsync(
                 cardId,
@@ -102,7 +112,7 @@ namespace CollabSpace.Tests.Services
             var context = CreateContext();
             var (userId, cardId, _) = await SeedCardAsync(context);
             var service = new CommentService(context,
-                CreateMockNotifications());
+                CreateMockNotifications(), CreateMockActivity());
 
             var parent = await service.CreateCommentAsync(
                 cardId,
@@ -127,7 +137,7 @@ namespace CollabSpace.Tests.Services
             var context = CreateContext();
             var (userId, cardId, _) = await SeedCardAsync(context);
             var service = new CommentService(context,
-                CreateMockNotifications());
+                CreateMockNotifications(), CreateMockActivity());
 
             var parent = await service.CreateCommentAsync(cardId,
                 new CreateCommentDto { Content = "Parent" }, userId);
@@ -174,7 +184,7 @@ namespace CollabSpace.Tests.Services
             await context.SaveChangesAsync();
 
             var service = new CommentService(context,
-                CreateMockNotifications());
+                CreateMockNotifications(), CreateMockActivity() );
 
             var comment = await service.CreateCommentAsync(cardId,
                 new CreateCommentDto { Content = "My comment" }, authorId);
@@ -192,7 +202,7 @@ namespace CollabSpace.Tests.Services
             var context = CreateContext();
             var (userId, cardId, _) = await SeedCardAsync(context);
             var service = new CommentService(context,
-                CreateMockNotifications());
+                CreateMockNotifications(), CreateMockActivity() );
 
             var parent = await service.CreateCommentAsync(cardId,
                 new CreateCommentDto { Content = "Parent" }, userId);
