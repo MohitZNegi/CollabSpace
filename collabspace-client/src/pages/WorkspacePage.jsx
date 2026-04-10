@@ -1,12 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 import axiosInstance from '../api/axiosInstance';
 import NotificationBell from '../components/NotificationBell';
 import { logout } from '../features/auth/authSlice';
-import { useDispatch } from 'react-redux';
 import '../styles/components/workspace.css';
+
+// Maps action types to readable icon initials for the avatar
+const ACTION_ICONS = {
+    CardCreated: 'C+',
+    CardMoved: '>>',
+    CardUpdated: 'C~',
+    CommentAdded: '"',
+    MemberJoined: '+M',
+    BoardCreated: 'B+',
+    MessageSent: '~',
+};
 
 function WorkspacePage() {
     const { workspaceId } = useParams();
@@ -17,39 +27,54 @@ function WorkspacePage() {
     const [workspace, setWorkspace] = useState(null);
     const [boards, setBoards] = useState([]);
     const [members, setMembers] = useState([]);
+    const [dashboard, setDashboard] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newBoardName, setNewBoardName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
 
-    // Load workspace details, boards, and members in parallel.
-    // Promise.all fires all three requests simultaneously rather
-    // than waiting for each one before starting the next.
-    // This cuts load time by roughly two thirds.
     useEffect(() => {
-        const loadWorkspace = async () => {
+        const loadAll = async () => {
             try {
                 setIsLoading(true);
 
-                const [workspaceRes, boardsRes, membersRes] = await Promise.all([
-                    axiosInstance.get(`/workspaces/${workspaceId}`),
-                    axiosInstance.get(`/workspaces/${workspaceId}/boards`),
-                    axiosInstance.get(`/workspaces/${workspaceId}/members`),
-                ]);
-
+                // Workspace must succeed — redirect if it fails
+                const workspaceRes = await axiosInstance.get(
+                    `/workspaces/${workspaceId}`);
                 setWorkspace(workspaceRes.data);
-                setBoards(boardsRes.data);
-                setMembers(membersRes.data);
+
+                // Everything else loads independently
+                const [boardsRes, membersRes, dashboardRes] =
+                    await Promise.allSettled([
+                        axiosInstance.get(
+                            `/workspaces/${workspaceId}/boards`),
+                        axiosInstance.get(
+                            `/workspaces/${workspaceId}/members`),
+                        axiosInstance.get(
+                            `/workspaces/${workspaceId}/dashboard`),
+                    ]);
+
+                if (boardsRes.status === 'fulfilled')
+                    setBoards(boardsRes.value.data);
+                else toast.error('Failed to load boards.');
+
+                if (membersRes.status === 'fulfilled')
+                    setMembers(membersRes.value.data);
+                else toast.error('Failed to load members.');
+
+                if (dashboardRes.status === 'fulfilled')
+                    setDashboard(dashboardRes.value.data);
+
             } catch (error) {
-                console.error(error)
-                toast.error('Failed to load workspace.');
+                console.error('Error loading workspace data:', error);
+                toast.error('Workspace not found or access denied.');
                 navigate('/dashboard');
             } finally {
                 setIsLoading(false);
             }
         };
 
-        loadWorkspace();
+        loadAll();
     }, [workspaceId, navigate]);
 
     const handleCreateBoard = async (e) => {
@@ -60,9 +85,7 @@ function WorkspacePage() {
         setIsCreating(true);
         try {
             const response = await axiosInstance.post(
-                `/workspaces/${workspaceId}/boards`,
-                { name });
-
+                `/workspaces/${workspaceId}/boards`, { name });
             setBoards((prev) => [...prev, response.data]);
             setShowCreateModal(false);
             setNewBoardName('');
@@ -70,8 +93,7 @@ function WorkspacePage() {
         } catch (error) {
             toast.error(
                 error.response?.data?.error?.message
-                || 'Failed to create board.'
-            );
+                || 'Failed to create board.');
         } finally {
             setIsCreating(false);
         }
@@ -80,7 +102,7 @@ function WorkspacePage() {
     const handleCopyInviteCode = () => {
         if (!workspace?.inviteCode) return;
         navigator.clipboard.writeText(workspace.inviteCode);
-        toast.success('Invite code copied to clipboard!');
+        toast.success('Invite code copied!');
     };
 
     const handleLogout = () => {
@@ -89,8 +111,26 @@ function WorkspacePage() {
     };
 
     const getRoleBadgeClass = (role) => {
-        const map = { Owner: 'role-owner', Lead: 'role-lead', Member: 'role-member' };
+        const map = {
+            Owner: 'role-owner',
+            Lead: 'role-lead',
+            Member: 'role-member'
+        };
         return `member-role-badge ${map[role] || 'role-member'}`;
+    };
+
+    const formatTime = (timestamp) => {
+        const diff = Math.floor(
+            (new Date() - new Date(timestamp)) / 60000);
+        if (diff < 1) return 'Just now';
+        if (diff < 60) return `${diff}m ago`;
+        if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
+        return new Date(timestamp).toLocaleDateString();
+    };
+
+    const isOnline = (lastSeenAt) => {
+        if (!lastSeenAt) return false;
+        return (new Date() - new Date(lastSeenAt)) < 15 * 60 * 1000;
     };
 
     const formatDate = (timestamp) =>
@@ -114,8 +154,6 @@ function WorkspacePage() {
 
     return (
         <div className="workspace-page">
-
-            {/* Header */}
             <header className="workspace-header">
                 <div className="workspace-header-left">
                     <button
@@ -147,12 +185,12 @@ function WorkspacePage() {
 
             <main className="workspace-main">
 
-                {/* Invite code banner */}
+                {/* Invite code */}
                 {workspace?.inviteCode && (
                     <div className="invite-banner">
                         <div>
                             <div className="invite-banner-label">
-                                Invite code — share this to add members
+                                Invite code
                             </div>
                             <div className="invite-code">
                                 {workspace.inviteCode}
@@ -167,11 +205,94 @@ function WorkspacePage() {
                     </div>
                 )}
 
-                {/* Boards section */}
+                {/* Task stats */}
+                {dashboard?.taskStats && (
+                    <div className="stats-bar">
+                        <div className="stat-card todo">
+                            <div className="stat-number">
+                                {dashboard.taskStats.todo}
+                            </div>
+                            <div className="stat-label">To Do</div>
+                        </div>
+                        <div className="stat-card inprogress">
+                            <div className="stat-number">
+                                {dashboard.taskStats.inProgress}
+                            </div>
+                            <div className="stat-label">In Progress</div>
+                        </div>
+                        <div className="stat-card done">
+                            <div className="stat-number">
+                                {dashboard.taskStats.done}
+                            </div>
+                            <div className="stat-label">Done</div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Active members strip */}
+                {dashboard?.activeMembers?.length > 0 && (
+                    <div className="active-members-strip">
+                        <span className="active-members-label">
+                            Recently active
+                        </span>
+                        {dashboard.activeMembers.map((member) => (
+                            <div
+                                key={member.userId}
+                                className="active-member-chip"
+                                title={member.lastSeenAt
+                                    ? `Last seen ${formatTime(
+                                        member.lastSeenAt)}`
+                                    : 'Never seen'}
+                            >
+                                <div className="active-member-chip-avatar">
+                                    {member.username[0].toUpperCase()}
+                                </div>
+                                {member.username}
+                                {isOnline(member.lastSeenAt) && (
+                                    <div className="online-dot"
+                                        title="Online now" />
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Activity feed */}
+                <div className="activity-feed">
+                    <div className="activity-feed-header">
+                        <h3 className="section-title">Recent Activity</h3>
+                    </div>
+                    <div className="activity-list">
+                        {!dashboard?.recentActivity?.length ? (
+                            <div className="activity-empty">
+                                No activity yet. Create a board to get started.
+                            </div>
+                        ) : (
+                            dashboard.recentActivity.map((item) => (
+                                <div key={item.id} className="activity-item">
+                                    <div className={`activity-avatar ${item.actionType}`}>
+                                        {ACTION_ICONS[item.actionType]
+                                            || item.actorUsername[0]
+                                                .toUpperCase()}
+                                    </div>
+                                    <div className="activity-content">
+                                        <p className="activity-description">
+                                            {item.description}
+                                        </p>
+                                        <span className="activity-time">
+                                            {formatTime(item.createdAt)}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                {/* Boards */}
                 <div className="section-header">
                     <h3 className="section-title">Boards</h3>
                 </div>
-
                 <div className="boards-grid">
                     {boards.map((board) => (
                         <div
@@ -191,8 +312,6 @@ function WorkspacePage() {
                             </div>
                         </div>
                     ))}
-
-                    {/* Create new board tile */}
                     <button
                         className="board-card-create"
                         onClick={() => setShowCreateModal(true)}
@@ -202,7 +321,7 @@ function WorkspacePage() {
                     </button>
                 </div>
 
-                {/* Members section */}
+                {/* Members */}
                 <div className="members-section">
                     <h3 className="section-title">
                         Members ({members.length})
