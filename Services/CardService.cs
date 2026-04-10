@@ -1,6 +1,7 @@
 ﻿using CollabSpace.Data;
 using CollabSpace.Exceptions;
 using CollabSpace.Models;
+using CollabSpace.Models.Constants;
 using CollabSpace.Models.DTOs.Card;
 using CollabSpace.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -13,15 +14,18 @@ namespace CollabSpace.Services
         private readonly AppDbContext _context;
         private readonly IBoardEventService _boardEvents;
         private readonly INotificationService _notifications;
+        private readonly IActivityService _activity;
 
         public CardService(
             AppDbContext context,
             IBoardEventService boardEvents,
-            INotificationService notifications)
+            INotificationService notifications,
+            IActivityService activity)
         {
             _context = context;
             _boardEvents = boardEvents;
             _notifications = notifications;
+            _activity = activity;
         }
 
         public async Task<List<CardResponseDto>> GetCardsAsync(
@@ -82,6 +86,14 @@ namespace CollabSpace.Services
 
             _context.Cards.Add(card);
             await _context.SaveChangesAsync();
+
+            var workspaceId = card.Board!.WorkspaceId;
+            _ = _activity.RecordAsync(
+                workspaceId, createdByUserId,
+                ActivityTypes.CardCreated,
+                $"{(await _context.Users.FindAsync(createdByUserId))?.Username} " +
+                $"created card \"{card.Title}\"",
+                card.Id, "Card");
 
             await _context.Entry(card).Reference(c => c.CreatedBy).LoadAsync();
 
@@ -273,6 +285,12 @@ namespace CollabSpace.Services
             // Single SaveChangesAsync commits all position changes
             // atomically. Positions are never inconsistent.
             await _context.SaveChangesAsync();
+
+            _ = _activity.RecordAsync(
+            card.Board!.WorkspaceId, requestingUserId,
+            ActivityTypes.CardMoved,
+            $"Card \"{card.Title}\" moved to {card.Status}",
+            card.Id, "Card");
 
             // Broadcast a lightweight move event — just the essentials.
             // No need to send the full card object for a position change.

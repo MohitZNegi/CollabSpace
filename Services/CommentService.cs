@@ -1,9 +1,11 @@
 ﻿using CollabSpace.Data;
 using CollabSpace.Exceptions;
 using CollabSpace.Models;
+using CollabSpace.Models.Constants;
 using CollabSpace.Models.DTOs.Comment;
 using CollabSpace.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 namespace CollabSpace.Services
 {
@@ -11,13 +13,16 @@ namespace CollabSpace.Services
     {
         private readonly AppDbContext _context;
         private readonly INotificationService _notifications;
+        private readonly IActivityService _activity;
 
         public CommentService(
             AppDbContext context,
-            INotificationService notifications)
+            INotificationService notifications,
+            IActivityService activity)
         {
             _context = context;
             _notifications = notifications;
+            _activity = activity;
         }
 
         public async Task<List<CommentResponseDto>> GetCommentsAsync(
@@ -87,6 +92,11 @@ namespace CollabSpace.Services
 
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
+            _ = _activity.RecordAsync(
+            card.Board!.WorkspaceId, authorId,
+            ActivityTypes.CommentAdded,
+            $"{author.Username} commented on \"{card.Title}\"",
+            comment.Id, "Comment");
 
             // -------------------------------------------------------
             // NOTIFICATION TRIGGERS
