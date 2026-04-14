@@ -1,13 +1,24 @@
-name: CollabSpace CI
+name: CollabSpace CI/CD
 
+# Triggers: run on pushes and PRs to main and develop
 on:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
 
+# Environment variables available to all jobs
+env:
+  DOTNET_VERSION: "10.0.x"
+  NODE_VERSION: "20.x"
+
 jobs:
-  build-and-test:
+  # ─────────────────────────────────────────────────────────────
+  # JOB 1: Build and test the backend
+  # Runs on every push and every pull request
+  # ─────────────────────────────────────────────────────────────
+  backend:
+    name: Backend — Build and Test
     runs-on: ubuntu-latest
 
     steps:
@@ -17,7 +28,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
         run: dotnet restore
@@ -25,5 +36,115 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
-      - name: Run tests
-        run: dotnet test --no-build --configuration Release --verbosity normal
+      - name: Run unit tests
+        run: >
+          dotnet test
+          --no-build
+          --configuration Release
+          --verbosity normal
+          --logger "trx;LogFileName=test-results.trx"
+          --collect:"XPlat Code Coverage"
+
+      # Upload test results so you can see them in the GitHub UI
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: "**/*.trx"
+
+      # Upload coverage report for review
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: "**/coverage.cobertura.xml"
+
+  # ─────────────────────────────────────────────────────────────
+  # JOB 2: Build the frontend
+  # Runs on every push and every pull request
+  # ─────────────────────────────────────────────────────────────
+  frontend:
+    name: Frontend — Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: collabspace-client/package-lock.json
+
+      - name: Install dependencies
+        working-directory: collabspace-client
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: collabspace-client
+        env:
+          # Injected at build time from GitHub secrets
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: npm run build
+
+      # Upload the built frontend for the deploy job to use
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: collabspace-client/dist
+
+  # ─────────────────────────────────────────────────────────────
+  # JOB 3: Deploy backend to Railway
+  # Only runs when pushing to main AND both build jobs passed
+  # Never runs on pull requests — you review before deploying
+  # ─────────────────────────────────────────────────────────────
+  deploy-backend:
+    name: Deploy Backend to Railway
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service collabspace
+
+  # ─────────────────────────────────────────────────────────────
+  # JOB 4: Deploy frontend to Netlify (free, instant deploys)
+  # Only runs when pushing to main AND both build jobs passed
+  # ─────────────────────────────────────────────────────────────
+  deploy-frontend:
+    name: Deploy Frontend to Netlify
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Download frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: dist
+
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: dist
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions — ${{ github.sha }}"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
