@@ -16,7 +16,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DatabaseConnection")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DatabaseConnection")));
 
 // JWT Settings — binds appsettings.json section to the JwtSettings class
 builder.Services.Configure<JwtSettings>(
@@ -92,13 +93,19 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+var allowedOrigins = builder.Configuration
+    .GetSection("AllowedOrigins")
+    .Get<string[]>()
+    ?? new[] { "http://localhost:5173" };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -119,5 +126,5 @@ app.UseMiddleware<GlobalExceptionHandler>();
 app.UseAuthentication(); // must come before UseAuthorization
 app.UseAuthorization();
 app.MapControllers();
-
+app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 app.Run();
