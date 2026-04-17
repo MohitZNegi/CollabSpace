@@ -30,20 +30,27 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      # Restore runs at the solution level so ALL projects
+      # including the test project get their packages restored.
+      # This is what fixes the project.assets.json error.
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore CollabSpace.slnx
 
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
+      # Build the entire solution in one command.
+      # Both the API and test project are compiled together.
+      - name: Build solution
+        run: dotnet build CollabSpace.slnx --no-restore --configuration Release
 
-      - name: Run unit tests
-        run: >
-          dotnet test
-          --no-build
-          --configuration Release
-          --verbosity normal
-          --logger "trx;LogFileName=test-results.trx"
-          --collect:"XPlat Code Coverage"
+      # Run tests from the solution. Dotnet finds the test project
+      # automatically because it is registered in the .slnx file.
+      - name: Run tests
+        run: |
+          dotnet test CollabSpace.slnx \
+            --no-build \
+            --configuration Release \
+            --verbosity normal \
+            --logger "trx;LogFileName=test-results.trx" \
+            --collect:"XPlat Code Coverage"
 
       # Upload test results so you can see them in the GitHub UI
       - name: Upload test results
