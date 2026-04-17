@@ -44,7 +44,6 @@ jobs:
       # Run tests from the solution. Dotnet finds the test project
       # automatically because it is registered in the .slnx file.
       - name: Run tests
-<<<<<<< develop
         run: |
           dotnet test CollabSpace.slnx \
             --no-build \
@@ -156,6 +155,3 @@ jobs:
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-=======
-        run: dotnet test --no-build --configuration Release --verbosity normal
->>>>>>> main
