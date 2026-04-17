@@ -1,4 +1,4 @@
-name: CollabSpace CI
+name: CollabSpace CI/CD
 
 on:
   push:
