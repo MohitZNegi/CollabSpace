@@ -4,3 +4,4 @@ collabspace-client/
 **/.git/
 **/obj/
 **/bin/
+*.Tests/
