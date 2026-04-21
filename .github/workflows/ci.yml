@@ -51,7 +51,6 @@ jobs:
             --verbosity normal \
             --logger "trx;LogFileName=test-results.trx" \
             --collect:"XPlat Code Coverage"
-            --verbosity normal
 
         # Publish ONLY the API project for deployment
       # This is separate from build — publish creates the deployable output
