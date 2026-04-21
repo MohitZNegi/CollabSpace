@@ -45,28 +45,30 @@ jobs:
       # automatically because it is registered in the .slnx file.
       - name: Run tests
         run: |
-          dotnet test CollabSpace.slnx \
+          dotnet test CollabSpace.Tests/CollabSpace.Tests.csproj \
             --no-build \
             --configuration Release \
             --verbosity normal \
             --logger "trx;LogFileName=test-results.trx" \
             --collect:"XPlat Code Coverage"
+            --verbosity normal
 
-      # Upload test results so you can see them in the GitHub UI
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results
-          path: "**/*.trx"
+        # Publish ONLY the API project for deployment
+      # This is separate from build — publish creates the deployable output
+      - name: Publish API
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          dotnet publish CollabSpace.csproj \
+            --configuration Release \
+            --no-restore \
+            --output ./publish
 
-      # Upload coverage report for review
-      - name: Upload coverage report
+      - name: Upload publish artifact
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: coverage-report
-          path: "**/coverage.cobertura.xml"
+          name: api-publish
+          path: ./publish
 
   # ─────────────────────────────────────────────────────────────
   # JOB 2: Build the frontend
