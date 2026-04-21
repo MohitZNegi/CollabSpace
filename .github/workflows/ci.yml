@@ -56,11 +56,7 @@ jobs:
       # This is separate from build — publish creates the deployable output
       - name: Publish API
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
-          dotnet publish CollabSpace.csproj \
-            --configuration Release \
-            --no-restore \
-            --output ./publish
+        run: dotnet publish CollabSpace.csproj --configuration Release --output ./publish
 
       - name: Upload publish artifact
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
