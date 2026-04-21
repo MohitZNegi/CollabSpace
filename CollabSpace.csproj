@@ -12,10 +12,14 @@
     <Content Remove="obj\**" />
     <EmbeddedResource Remove="obj\**" />
     <None Remove="obj\**" />
+	  <Compile Remove="CollabSpace.Tests/**" />
+	  <Content Remove="CollabSpace.Tests/**" />
+	  <EmbeddedResource Remove="CollabSpace.Tests/**" />
+	  <None Remove="CollabSpace.Tests/**" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="12.0.1" />
+    <PackageReference Include="AutoMapper" Version="13.0.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
     <PackageReference Include="coverlet.collector" Version="8.0.1">
