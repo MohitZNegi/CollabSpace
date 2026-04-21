@@ -1,0 +1,10 @@
+[build]
+builder = "nixpacks"
+buildCommand = "dotnet restore CollabSpace.csproj && dotnet publish CollabSpace.csproj --no-restore -c Release -o out"
+
+[deploy]
+startCommand = "dotnet out/CollabSpace.dll"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
