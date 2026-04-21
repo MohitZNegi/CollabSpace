@@ -4,4 +4,7 @@ collabspace-client/
 **/.git/
 **/obj/
 **/bin/
-*.Tests/
+*.md
+.github/
+nixpacks.toml
+railway.toml
