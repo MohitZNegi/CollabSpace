@@ -1,135 +1,58 @@
-# CollabSpace
+# CollabSpace — Real-Time Team Collaboration Platform
 
-CollabSpace is a real-time team collaboration platform designed to unify communication, task management, and workspace collaboration into a single system.
+A full-stack, production-deployed team collaboration platform built with
+ASP.NET Core 10, React 18, and SignalR.
 
-## Project Overview
+Live demo: https://collabspace.yourdomain.tk
+API: https://api.collabspace.yourdomain.tk/swagger
 
-Modern teams often use multiple tools for messaging, task tracking, and collaboration. This leads to fragmentation and reduced productivity. CollabSpace solves this by providing an integrated platform where teams can communicate, manage tasks, and collaborate in real time.
+## What it does
 
-## Core Features
+CollabSpace lets teams collaborate in real time across shared boards,
+workspaces, and chat. Card updates, messages, and notifications appear
+instantly for all connected users without page refreshes.
 
-- JWT-based authentication with role management (Admin, Team Lead, Member)
-- Workspace creation and member management via invite codes
-- Real-time collaborative boards with drag-and-drop task management
-- Workspace group chat and direct messaging
-- Threaded comments on tasks and boards
-- Real-time notification system with persistence
-- Activity dashboard for tracking tasks and user activity
-- Search across users, messages, and tasks
+## Technical highlights
 
-## Tech Stack
+- Real-time communication via SignalR WebSockets
+- JWT authentication with refresh token rotation
+- Two-layer role system: global roles and workspace-scoped roles
+- Optimistic UI updates on card drag-and-drop
+- Cursor-based pagination for chat history
+- Factory pattern for notification creation
+- Strategy pattern for notification delivery
+- Observer pattern via SignalR hub groups
+- Repository pattern with EF Core and interface abstractions
+- 30+ unit tests with xUnit and Moq
+- Automated CI/CD via GitHub Actions deploying to Railway and Netlify
 
-- .NET Web API
-- Entity Framework Core
-- SQL Server
-- JWT Authentication
-- SignalR (real-time communication)
-- Azure (CI/CD deployment)
-- xUnit (testing)
+## Architecture
 
-## Project Scope
+Backend: ASP.NET Core 10 Web API
+├── Controllers (HTTP only, no business logic)
+├── Services (all business logic)
+├── Repositories via EF Core (data access only)
+├── SignalR Hub (real-time event broadcasting)
+└── Middleware (global exception handling, JWT)
 
-### In Scope
+Frontend: React 18
+├── Redux Toolkit (global state)
+├── Axios with interceptors (JWT attachment, 401 handling)
+├── SignalR JS client (real-time updates)
+└── @hello-pangea/dnd (drag and drop)
 
-- Authentication and authorization system
-- Workspace and membership management
-- Real-time collaboration features
-- Messaging system (group and direct)
-- Notifications and activity tracking
-- Search functionality
-- CI/CD deployment pipeline
+## Running locally
 
-### Out of Scope
+Backend:
+  cd CollabSpace
+  dotnet user-secrets set "JwtSettings:SecretKey" "your-key"
+  dotnet ef database update
+  dotnet run
 
-- Email notifications
-- Mobile applications (iOS/Android)
-- File uploads and media handling
-- Video/voice communication
-- Third-party integrations (GitHub, Jira, Slack)
+Frontend:
+  cd collabspace-client
+  npm install
+  npm run dev
 
-## Getting Started
-
-1. Clone the repository  
-2. Update `appsettings.json`:
-   - Add database connection string
-   - Configure JWT settings  
-3. Apply database migrations:
-
-dotnet ef database update
-
-4. Run the application:
-
-dotnet run
-
-
-## API Testing (Swagger)
-
-- Run the application
-- Open:
-
-https://localhost:{port}/swagger
-
-- Use Swagger UI to test endpoints like `/api/v1/auth/register`
-
-## Authentication Endpoints
-
-### Register
-
-POST /api/v1/auth/register
-
-
-Request body:
-
-{
-"username": "testuser",
-"email": "test@example.com
-",
-"password": "SecurePass123!"
-}
-
-
-### Login
-
-POST /api/v1/auth/login
-
-
-### Refresh Token
-
-POST /api/v1/auth/refresh
-
-
-### Logout
-
-POST /api/v1/auth/logout
-
-
-## Testing
-
-Run tests using:
-
-dotnet test
-
-
-- Uses in-memory database
-- Ensures no impact on real data
-- Covers workspace authorization logic
-
-## Project Structure
-
-
-CollabSpace/
-├── Controllers/
-├── Services/
-├── Data/
-├── Models/
-└── Settings/
-
-CollabSpace.Tests/
-└── Services/
-
-
-## Notes
-
-- Ensure only one BCrypt package is installed to avoid conflicts
-- Keep JWT secret key secure
-- Update vulnerable dependencies regularly
+Tests:
+  dotnet test
