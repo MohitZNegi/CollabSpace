@@ -1,0 +1,6 @@
+CollabSpace.Tests/
+collabspace-client/
+**/node_modules/
+**/.git/
+**/obj/
+**/bin/
