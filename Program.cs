@@ -118,35 +118,6 @@ if (app.Environment.IsDevelopment())
 }
 app.UseCors("AllowReactApp");
 
-// Auto-apply migrations on startup in production.
-// In development you run migrations manually via the CLI.
-// In production the app migrates itself on each deploy.
-if (app.Environment.IsProduction())
-{
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider
-        .GetRequiredService<AppDbContext>();
-
-    // Retry logic handles the brief delay between the app
-    // starting and the database being ready to accept connections
-    var retries = 0;
-    while (retries < 5)
-    {
-        try
-        {
-            db.Database.Migrate();
-            break;
-        }
-        catch (Exception ex)
-        {
-            retries++;
-            Console.WriteLine(
-                $"Migration attempt {retries} failed: {ex.Message}");
-            await Task.Delay(2000);
-        }
-    }
-}
-
 // In the middleware pipeline, this must come FIRST
 // before UseAuthentication and UseAuthorization
 // Map the hub to a URL after app.UseAuthorization()
