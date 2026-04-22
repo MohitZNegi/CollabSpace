@@ -1,0 +1,10 @@
+CollabSpace.Tests/
+collabspace-client/
+**/node_modules/
+**/.git/
+**/obj/
+**/bin/
+*.md
+.github/
+nixpacks.toml
+railway.toml
