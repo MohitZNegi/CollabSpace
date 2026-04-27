@@ -14,10 +14,44 @@ using static System.Net.Mime.MediaTypeNames;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Database
+// TEMPORARY DEBUG — remove after fixing
+Console.WriteLine("=== CONNECTION STRING DEBUG ===");
+Console.WriteLine($"Raw env var: {Environment.GetEnvironmentVariable("ConnectionStrings__DatabaseConnection") ?? "NULL"}");
+Console.WriteLine($"Config value: {builder.Configuration.GetConnectionString("DatabaseConnection") ?? "NULL"}");
+Console.WriteLine($"DATABASE_URL: {Environment.GetEnvironmentVariable("DATABASE_URL") ?? "NULL"}");
+Console.WriteLine("================================");
+
+// Read connection string with fallback to DATABASE_URL
+// Railway PostgreSQL exposes DATABASE_URL automatically
+// We try our configured variable first, then fall back to DATABASE_URL
+var connectionString =
+    builder.Configuration.GetConnectionString("DatabaseConnection")
+    ?? Environment.GetEnvironmentVariable("DATABASE_URL");
+
+if (string.IsNullOrEmpty(connectionString))
+    throw new InvalidOperationException(
+        "No database connection string found. " +
+        "Set ConnectionStrings__DatabaseConnection or DATABASE_URL.");
+
+// Fix for Railway's PostgreSQL URL format.
+// Railway provides postgresql:// but Npgsql needs Host=...;Database=...
+// This converts the URL format to the connection string format Npgsql expects.
+if (connectionString.StartsWith("postgresql://")
+    || connectionString.StartsWith("postgres://"))
+{
+    var uri = new Uri(connectionString);
+    var userInfo = uri.UserInfo.Split(':');
+    connectionString = $"Host={uri.Host};" +
+        $"Port={uri.Port};" +
+        $"Database={uri.AbsolutePath.TrimStart('/')};" +
+        $"Username={userInfo[0]};" +
+        $"Password={userInfo[1]};" +
+        $"SSL Mode=Require;" +
+        $"Trust Server Certificate=true;";
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DatabaseConnection")));
+    options.UseNpgsql(connectionString));
 
 // JWT Settings — binds appsettings.json section to the JwtSettings class
 builder.Services.Configure<JwtSettings>(
