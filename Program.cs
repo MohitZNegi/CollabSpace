@@ -8,50 +8,51 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using static System.Net.Mime.MediaTypeNames;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// TEMPORARY DEBUG — remove after fixing
-Console.WriteLine("=== CONNECTION STRING DEBUG ===");
-Console.WriteLine($"Raw env var: {Environment.GetEnvironmentVariable("ConnectionStrings__DatabaseConnection") ?? "NULL"}");
-Console.WriteLine($"Config value: {builder.Configuration.GetConnectionString("DatabaseConnection") ?? "NULL"}");
-Console.WriteLine($"DATABASE_URL: {Environment.GetEnvironmentVariable("DATABASE_URL") ?? "NULL"}");
-Console.WriteLine("================================");
-
-// Read connection string with fallback to DATABASE_URL
-// Railway PostgreSQL exposes DATABASE_URL automatically
-// We try our configured variable first, then fall back to DATABASE_URL
+// Read connection string from configuration or environment
 var connectionString =
     builder.Configuration.GetConnectionString("DatabaseConnection")
+    ?? Environment.GetEnvironmentVariable("ConnectionStrings__DatabaseConnection")
     ?? Environment.GetEnvironmentVariable("DATABASE_URL");
 
 if (string.IsNullOrEmpty(connectionString))
     throw new InvalidOperationException(
-        "No database connection string found. " +
-        "Set ConnectionStrings__DatabaseConnection or DATABASE_URL.");
+        "Database connection string not found. " +
+        "Set ConnectionStrings__DatabaseConnection in your environment.");
 
-// Fix for Railway's PostgreSQL URL format.
-// Railway provides postgresql:// but Npgsql needs Host=...;Database=...
-// This converts the URL format to the connection string format Npgsql expects.
-if (connectionString.StartsWith("postgresql://")
-    || connectionString.StartsWith("postgres://"))
+// Convert postgresql:// URL format to Npgsql connection string format.
+// Railway and many cloud providers return URLs but Npgsql needs key=value format.
+if (connectionString.StartsWith("postgresql://") ||
+    connectionString.StartsWith("postgres://"))
 {
     var uri = new Uri(connectionString);
     var userInfo = uri.UserInfo.Split(':');
-    connectionString = $"Host={uri.Host};" +
-        $"Port={uri.Port};" +
-        $"Database={uri.AbsolutePath.TrimStart('/')};" +
-        $"Username={userInfo[0]};" +
-        $"Password={userInfo[1]};" +
+    var host = uri.Host;
+    var port = uri.Port > 0 ? uri.Port : 5432;
+    var database = uri.AbsolutePath.TrimStart('/');
+    var username = userInfo[0];
+    var password = Uri.UnescapeDataString(userInfo[1]);
+
+    connectionString =
+        $"Host={host};" +
+        $"Port={port};" +
+        $"Database={database};" +
+        $"Username={username};" +
+        $"Password={password};" +
         $"SSL Mode=Require;" +
         $"Trust Server Certificate=true;";
 }
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString)
+           .ConfigureWarnings(w =>
+               w.Ignore(RelationalEventId.PendingModelChangesWarning)));
 
 // JWT Settings — binds appsettings.json section to the JwtSettings class
 builder.Services.Configure<JwtSettings>(
