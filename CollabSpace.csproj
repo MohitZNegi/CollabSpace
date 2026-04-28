@@ -41,10 +41,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Data\" />
 		<Folder Include="DTOs\" />
 		<Folder Include="Helpers\" />
 		<Folder Include="Interfaces\" />
+		<Folder Include="Migrations\" />
 		<Folder Include="Repositories\" />
 	</ItemGroup>
 
