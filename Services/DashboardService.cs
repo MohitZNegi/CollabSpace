@@ -30,22 +30,22 @@ namespace CollabSpace.Services
                 throw new ForbiddenException(
                     "You are not a member of this workspace.");
 
-            // Load all three datasets in parallel for performance
-            var activityTask = _activityService.GetRecentActivityAsync(
-                workspaceId, requestingUserId, 20);
+            // Run sequentially instead of in parallel.
+            // EF Core DbContext cannot handle concurrent queries
+            // on the same instance. Sequential is safe and the
+            // performance difference on a dashboard is negligible.
+            var recentActivity = await _activityService
+                .GetRecentActivityAsync(workspaceId, requestingUserId, 20);
 
-            var taskStatsTask = GetTaskStatsAsync(workspaceId);
+            var taskStats = await GetTaskStatsAsync(workspaceId);
 
-            var activeMembersTask = GetActiveMembersAsync(workspaceId);
-
-            await Task.WhenAll(activityTask, taskStatsTask,
-                activeMembersTask);
+            var activeMembers = await GetActiveMembersAsync(workspaceId);
 
             return new DashboardResponseDto
             {
-                RecentActivity = await activityTask,
-                TaskStats = await taskStatsTask,
-                ActiveMembers = await activeMembersTask
+                RecentActivity = recentActivity,
+                TaskStats = taskStats,
+                ActiveMembers = activeMembers
             };
         }
 
