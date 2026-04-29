@@ -11,11 +11,16 @@ namespace CollabSpace.Services
     {
         private readonly AppDbContext _context;
         private readonly IChatEventService _chatEvents;
+        private readonly INotificationService _notifications;
 
-        public ChatService(AppDbContext context, IChatEventService chatEvents)
+        public ChatService(
+            AppDbContext context,
+            IChatEventService chatEvents,
+            INotificationService notifications)
         {
             _context = context;
             _chatEvents = chatEvents;
+            _notifications = notifications;
         }
 
         // ---------------------------------------------------------------
@@ -52,6 +57,22 @@ namespace CollabSpace.Services
             // If the database fails, no message is broadcast.
             await _chatEvents.BroadcastWorkspaceMessageAsync(
                 workspaceId.ToString(), dto);
+
+            var sender = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == senderId);
+
+            var mentionedUserIds = await ResolveMentionsAsync(
+                request.Content, workspaceId, senderId);
+
+            if (mentionedUserIds.Any() && sender != null)
+            {
+                await _notifications.NotifyMentionsAsync(
+                    mentionedUserIds,
+                    sender.Username,
+                    "chat in workspace",
+                    message.Id);
+            }
 
             return dto;
         }
@@ -218,6 +239,27 @@ namespace CollabSpace.Services
             if (!isMember)
                 throw new ForbiddenException(
                     "You are not a member of this workspace.");
+        }
+
+        private async Task<List<Guid>> ResolveMentionsAsync(
+            string content, Guid workspaceId, Guid senderId)
+        {
+            var words = content.Split(' ', '\n', '\r')
+                .Where(w => w.StartsWith('@') && w.Length > 1)
+                .Select(w => w.TrimStart('@').Trim())
+                .Distinct()
+                .ToList();
+
+            if (!words.Any()) return new List<Guid>();
+
+            return await _context.WorkspaceMembers
+                .AsNoTracking()
+                .Where(wm => wm.WorkspaceId == workspaceId
+                          && wm.UserId != senderId)
+                .Include(wm => wm.User)
+                .Where(wm => words.Contains(wm.User!.Username))
+                .Select(wm => wm.UserId)
+                .ToListAsync();
         }
 
         private static MessageResponseDto MapToMessageDto(Message m) => new()

@@ -7,7 +7,6 @@ using CollabSpace.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 
-
 namespace CollabSpace.Tests.Services
 {
     public class ChatServiceTests
@@ -30,6 +29,16 @@ namespace CollabSpace.Tests.Services
                     It.IsAny<string>(), It.IsAny<object>()))
                 .Returns(Task.CompletedTask);
             return mock.Object;
+        }
+
+        private static Mock<INotificationService> CreateMockNotifications()
+        {
+            var mock = new Mock<INotificationService>();
+            mock.Setup(m => m.NotifyMentionsAsync(
+                    It.IsAny<List<Guid>>(), It.IsAny<string>(),
+                    It.IsAny<string>(), It.IsAny<Guid>()))
+                .Returns(Task.CompletedTask);
+            return mock;
         }
 
         private async Task<(Guid userId, Guid workspaceId)>
@@ -61,7 +70,11 @@ namespace CollabSpace.Tests.Services
         {
             var context = CreateContext();
             var (userId, workspaceId) = await SeedMemberAsync(context);
-            var service = new ChatService(context, CreateMockChatEvents());
+            var notifications = CreateMockNotifications();
+            var service = new ChatService(
+                context,
+                CreateMockChatEvents(),
+                notifications.Object);
 
             var result = await service.SendWorkspaceMessageAsync(
                 workspaceId,
@@ -74,10 +87,45 @@ namespace CollabSpace.Tests.Services
         }
 
         [Fact]
+        public async Task SendWorkspaceMessageAsync_NotifiesMentionedUsers()
+        {
+            var context = CreateContext();
+            var notifications = CreateMockNotifications();
+            var service = new ChatService(
+                context,
+                CreateMockChatEvents(),
+                notifications.Object);
+
+            var (senderId, workspaceId) = await SeedMemberAsync(context, "sender");
+            var (mentionedUserId, mentionedWorkspaceId) = await SeedMemberAsync(context, "alice");
+
+            var mentionedMembership = await context.WorkspaceMembers
+                .FirstAsync(wm => wm.UserId == mentionedUserId
+                               && wm.WorkspaceId == mentionedWorkspaceId);
+            mentionedMembership.WorkspaceId = workspaceId;
+            await context.SaveChangesAsync();
+
+            var result = await service.SendWorkspaceMessageAsync(
+                workspaceId,
+                new SendMessageDto { Content = "Hello @alice" },
+                senderId);
+
+            notifications.Verify(m => m.NotifyMentionsAsync(
+                It.Is<List<Guid>>(ids => ids.Count == 1 && ids.Contains(mentionedUserId)),
+                "sender",
+                "chat in workspace",
+                result.Id),
+                Times.Once);
+        }
+
+        [Fact]
         public async Task SendWorkspaceMessageAsync_Throws_WhenNotMember()
         {
             var context = CreateContext();
-            var service = new ChatService(context, CreateMockChatEvents());
+            var service = new ChatService(
+                context,
+                CreateMockChatEvents(),
+                CreateMockNotifications().Object);
 
             await Assert.ThrowsAsync<ForbiddenException>(() =>
                 service.SendWorkspaceMessageAsync(
@@ -91,7 +139,10 @@ namespace CollabSpace.Tests.Services
         {
             var context = CreateContext();
             var (userId, workspaceId) = await SeedMemberAsync(context);
-            var service = new ChatService(context, CreateMockChatEvents());
+            var service = new ChatService(
+                context,
+                CreateMockChatEvents(),
+                CreateMockNotifications().Object);
 
             await service.SendWorkspaceMessageAsync(workspaceId,
                 new SendMessageDto { Content = "First" }, userId);
@@ -114,7 +165,10 @@ namespace CollabSpace.Tests.Services
         {
             var context = CreateContext();
             var (userId, _) = await SeedMemberAsync(context);
-            var service = new ChatService(context, CreateMockChatEvents());
+            var service = new ChatService(
+                context,
+                CreateMockChatEvents(),
+                CreateMockNotifications().Object);
 
             await Assert.ThrowsAsync<ArgumentException>(() =>
                 service.SendDirectMessageAsync(
@@ -129,7 +183,10 @@ namespace CollabSpace.Tests.Services
             var context = CreateContext();
             var (senderId, _) = await SeedMemberAsync(context, "sender");
             var (recipientId, _) = await SeedMemberAsync(context, "recipient");
-            var service = new ChatService(context, CreateMockChatEvents());
+            var service = new ChatService(
+                context,
+                CreateMockChatEvents(),
+                CreateMockNotifications().Object);
 
             context.DirectMessages.Add(new DirectMessage
             {
