@@ -8,7 +8,7 @@ import { getConnection } from '../../services/signalrService';
 import MessageBubble from './MessageBubble';
 import '../../styles/components/chat.css';
 
-function ChatSidebar({ workspaceId }) {
+function ChatSidebar({ workspaceId, highlightedMessageId = null }) {
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
     const messages = useSelector(
@@ -19,6 +19,7 @@ function ChatSidebar({ workspaceId }) {
     const [inputValue, setInputValue] = useState('');
     const [isSending, setIsSending] = useState(false);
     const scrollAnchorRef = useRef(null);
+    const messageRefs = useRef({});
     const typingTimeoutRef = useRef(null);
     const inputRef = useRef(null);
 
@@ -44,8 +45,16 @@ function ChatSidebar({ workspaceId }) {
     // scrollIntoView with behavior: 'smooth' animates the scroll,
     // making new messages feel natural rather than jumping.
     useEffect(() => {
+        if (highlightedMessageId && messageRefs.current[highlightedMessageId]) {
+            messageRefs.current[highlightedMessageId].scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
+            return;
+        }
+
         scrollAnchorRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+    }, [messages, highlightedMessageId]);
 
     const handleSend = async () => {
         const content = inputValue.trim();
@@ -116,11 +125,20 @@ function ChatSidebar({ workspaceId }) {
 
             <div className="chat-messages">
                 {messages.map((message) => (
-                    <MessageBubble
+                    <div
                         key={message.id}
-                        message={message}
-                        isOwn={message.senderId === user?.id}
-                    />
+                        ref={(node) => {
+                            if (node) {
+                                messageRefs.current[message.id] = node;
+                            }
+                        }}
+                    >
+                        <MessageBubble
+                            message={message}
+                            isOwn={message.senderId === user?.id}
+                            isHighlighted={highlightedMessageId === message.id}
+                        />
+                    </div>
                 ))}
                 {/* Invisible anchor — scrolled into view on new messages */}
                 <div ref={scrollAnchorRef} className="chat-scroll-anchor" />

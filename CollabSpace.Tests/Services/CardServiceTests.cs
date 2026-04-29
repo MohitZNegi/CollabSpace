@@ -208,12 +208,14 @@ namespace CollabSpace.Tests.Services
 
             mock.Setup(m => m.NotifyCardUpdatedAsync(
                     It.IsAny<Guid>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<Guid>()))
+                    It.IsAny<string>(), It.IsAny<Guid>(),
+                    It.IsAny<Guid>(), It.IsAny<Guid>()))
                 .Returns(Task.CompletedTask);
 
             mock.Setup(m => m.NotifyCardAssignedAsync(
                     It.IsAny<Guid>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<Guid>()))
+                    It.IsAny<string>(), It.IsAny<Guid>(),
+                    It.IsAny<Guid>(), It.IsAny<Guid>()))
                 .Returns(Task.CompletedTask);
 
             return mock.Object;

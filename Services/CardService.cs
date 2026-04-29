@@ -183,7 +183,9 @@ namespace CollabSpace.Services
                     card.CreatedByUserId,
                     card.Title,
                     requester?.Username ?? "Someone",
-                    cardId);
+                    cardId,
+                    card.BoardId,
+                    card.Board.WorkspaceId);
             }
 
             // Notify the assignee if the card was just assigned to them
@@ -198,7 +200,9 @@ namespace CollabSpace.Services
                     request.AssignedToUserId.Value,
                     card.Title,
                     requester?.Username ?? "Someone",
-                    cardId);
+                    cardId,
+                    card.BoardId,
+                    card.Board.WorkspaceId);
             }
 
             return dto;

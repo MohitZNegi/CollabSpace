@@ -35,11 +35,13 @@ namespace CollabSpace.Tests.Services
             mock.Setup(m => m.NotifyCommentAddedAsync(
                     It.IsAny<Guid>(), It.IsAny<string>(),
                     It.IsAny<string>(), It.IsAny<Guid>(),
+                    It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(),
                     It.IsAny<Guid>()))
                 .Returns(Task.CompletedTask);
             mock.Setup(m => m.NotifyMentionsAsync(
                     It.IsAny<List<Guid>>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<Guid>()))
+                    It.IsAny<string>(), It.IsAny<Guid>(),
+                    It.IsAny<string?>()))
                 .Returns(Task.CompletedTask);
             return mock.Object;
         }

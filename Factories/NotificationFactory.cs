@@ -11,46 +11,54 @@ namespace CollabSpace.Factories
 
         public static Notification CardUpdated(
             Guid recipientId, string cardTitle,
-            string updatedByUsername, Guid cardId)
+            string updatedByUsername, Guid cardId,
+            Guid boardId, Guid workspaceId)
         {
             return Create(
                 recipientId,
                 NotificationTypes.CardUpdated,
                 $"{updatedByUsername} updated card \"{cardTitle}\"",
-                cardId);
+                cardId,
+                $"/workspaces/{workspaceId}/boards/{boardId}?card={cardId}");
         }
 
         public static Notification CardAssigned(
             Guid recipientId, string cardTitle,
-            string assignedByUsername, Guid cardId)
+            string assignedByUsername, Guid cardId,
+            Guid boardId, Guid workspaceId)
         {
             return Create(
                 recipientId,
                 NotificationTypes.CardAssigned,
                 $"{assignedByUsername} assigned you to \"{cardTitle}\"",
-                cardId);
+                cardId,
+                $"/workspaces/{workspaceId}/boards/{boardId}?card={cardId}");
         }
 
         public static Notification CommentAdded(
             Guid recipientId, string cardTitle,
-            string commenterUsername, Guid commentId)
+            string commenterUsername, Guid commentId,
+            Guid cardId, Guid boardId, Guid workspaceId)
         {
             return Create(
                 recipientId,
                 NotificationTypes.CommentAdded,
                 $"{commenterUsername} commented on \"{cardTitle}\"",
-                commentId);
+                commentId,
+                $"/workspaces/{workspaceId}/boards/{boardId}?card={cardId}&comment={commentId}");
         }
 
         public static Notification Mention(
             Guid recipientId, string mentionedByUsername,
-            string cardTitle, Guid commentId)
+            string context, Guid referenceId,
+            string? navigationUrl = null)
         {
             return Create(
                 recipientId,
                 NotificationTypes.Mention,
-                $"{mentionedByUsername} mentioned you in \"{cardTitle}\"",
-                commentId);
+                $"{mentionedByUsername} mentioned you in {context}",
+                referenceId,
+                navigationUrl);
         }
 
         public static Notification MemberJoined(
@@ -61,7 +69,8 @@ namespace CollabSpace.Factories
                 recipientId,
                 NotificationTypes.MemberJoined,
                 $"{newMemberUsername} joined {workspaceName}",
-                workspaceId);
+                workspaceId,
+                $"/workspaces/{workspaceId}");
         }
 
         public static Notification MemberRemoved(
@@ -70,8 +79,9 @@ namespace CollabSpace.Factories
             return Create(
                 recipientId,
                 NotificationTypes.MemberRemoved,
-                $"You have been removed from {workspaceName}",
-                workspaceId);
+                $"You were removed from {workspaceName}",
+                workspaceId,
+                "/dashboard");
         }
 
         // Private builder: all public methods funnel through here.
@@ -79,7 +89,8 @@ namespace CollabSpace.Factories
         // IsRead defaulting to false without repeating that logic.
         private static Notification Create(
             Guid recipientId, string type,
-            string message, Guid referenceId)
+            string message, Guid referenceId,
+            string? navigationUrl = null)
         {
             return new Notification
             {
@@ -88,6 +99,7 @@ namespace CollabSpace.Factories
                 Type = type,
                 Message = message,
                 ReferenceId = referenceId,
+                NavigationUrl = navigationUrl,
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow
             };

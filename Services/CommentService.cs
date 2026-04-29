@@ -114,7 +114,10 @@ namespace CollabSpace.Services
                     card.Title,
                     author.Username,
                     comment.Id,
-                    authorId);
+                    card.Id,
+                    authorId,
+                    card.Board.Id,
+                    card.Board.WorkspaceId);
             }
 
             // Parse @mentions from the comment content.
@@ -127,8 +130,9 @@ namespace CollabSpace.Services
                 await _notifications.NotifyMentionsAsync(
                     mentionedUserIds,
                     author.Username,
-                    card.Title,
-                    comment.Id);
+                    $"\"{card.Title}\"",
+                    comment.Id,
+                    $"/workspaces/{card.Board.WorkspaceId}/boards/{card.BoardId}?card={card.Id}&comment={comment.Id}");
             }
 
             return new CommentResponseDto

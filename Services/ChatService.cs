@@ -67,11 +67,21 @@ namespace CollabSpace.Services
 
             if (mentionedUserIds.Any() && sender != null)
             {
+                var boardId = await _context.Boards
+                    .AsNoTracking()
+                    .Where(b => b.WorkspaceId == workspaceId && !b.IsArchived)
+                    .OrderBy(b => b.CreatedAt)
+                    .Select(b => (Guid?)b.Id)
+                    .FirstOrDefaultAsync();
+
                 await _notifications.NotifyMentionsAsync(
                     mentionedUserIds,
                     sender.Username,
                     "chat in workspace",
-                    message.Id);
+                    message.Id,
+                    boardId.HasValue
+                        ? $"/workspaces/{workspaceId}/boards/{boardId}?chatMessage={message.Id}"
+                        : $"/workspaces/{workspaceId}");
             }
 
             return dto;

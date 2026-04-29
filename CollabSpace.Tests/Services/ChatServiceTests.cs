@@ -36,7 +36,8 @@ namespace CollabSpace.Tests.Services
             var mock = new Mock<INotificationService>();
             mock.Setup(m => m.NotifyMentionsAsync(
                     It.IsAny<List<Guid>>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<Guid>()))
+                    It.IsAny<string>(), It.IsAny<Guid>(),
+                    It.IsAny<string?>()))
                 .Returns(Task.CompletedTask);
             return mock;
         }
@@ -114,7 +115,9 @@ namespace CollabSpace.Tests.Services
                 It.Is<List<Guid>>(ids => ids.Count == 1 && ids.Contains(mentionedUserId)),
                 "sender",
                 "chat in workspace",
-                result.Id),
+                result.Id,
+                It.Is<string>(url => url.Contains($"/workspaces/{workspaceId}/boards/")
+                    && url.Contains($"chatMessage={result.Id}"))),
                 Times.Once);
         }
 

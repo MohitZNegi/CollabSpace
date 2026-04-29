@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { DragDropContext } from '@hello-pangea/dnd';
 import toast from 'react-hot-toast';
@@ -26,6 +26,7 @@ const COLUMNS = [
 function BoardPage() {
     const { boardId, workspaceId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const dispatch = useDispatch();
     // Alias `user` to `_user` to satisfy the project's ESLint rule for allowed unused vars.
     const { user: _user } = useSelector((s) => s.auth);
@@ -34,6 +35,11 @@ function BoardPage() {
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
     const [isLoadingCards, setIsLoadingCards] = useState(true);
+
+    const searchParams = new URLSearchParams(location.search);
+    const requestedCardId = searchParams.get('card');
+    const requestedCommentId = searchParams.get('comment');
+    const requestedChatMessageId = searchParams.get('chatMessage');
 
     // Activate SignalR listeners for board and chat events
     useBoardSignalR(boardId);
@@ -64,6 +70,23 @@ function BoardPage() {
 
         loadBoard();
     }, [boardId, workspaceId, dispatch, navigate]);
+
+    useEffect(() => {
+        if (requestedChatMessageId && !isChatOpen) {
+            setIsChatOpen(true);
+        }
+    }, [requestedChatMessageId, isChatOpen]);
+
+    useEffect(() => {
+        if (isLoadingCards || !requestedCardId || selectedCard) {
+            return;
+        }
+
+        const matchedCard = cards.find((card) => card.id === requestedCardId);
+        if (matchedCard) {
+            setSelectedCard(matchedCard);
+        }
+    }, [cards, isLoadingCards, requestedCardId, selectedCard]);
 
     // Filter cards for a specific column, sorted by position
     const getColumnCards = useCallback((status) => {
@@ -140,6 +163,17 @@ function BoardPage() {
         return <BoardPageSkeleton />;
     }
 
+    const clearBoardQueryParams = (...keys) => {
+        const nextParams = new URLSearchParams(location.search);
+        keys.forEach((key) => nextParams.delete(key));
+
+        const nextSearch = nextParams.toString();
+        navigate(
+            `${location.pathname}${nextSearch ? `?${nextSearch}` : ''}`,
+            { replace: true }
+        );
+    };
+
     return (
         <div className="board-page">
             {/* Header */}
@@ -198,7 +232,10 @@ function BoardPage() {
                 </DragDropContext>
 
                 {isChatOpen && (
-                    <ChatSidebar workspaceId={workspaceId} />
+                    <ChatSidebar
+                        workspaceId={workspaceId}
+                        highlightedMessageId={requestedChatMessageId}
+                    />
                 )}
             </div>
 
@@ -206,10 +243,15 @@ function BoardPage() {
             {selectedCard && (
                 <CardDetailModal
                     card={selectedCard}
-                    onClose={() => setSelectedCard(null)}
+                    highlightedCommentId={requestedCommentId}
+                    onClose={() => {
+                        setSelectedCard(null);
+                        clearBoardQueryParams('card', 'comment');
+                    }}
                     onUpdated={(updatedCard) => {
                         dispatch(cardUpdated(updatedCard));
                         setSelectedCard(null);
+                        clearBoardQueryParams('card', 'comment');
                     }}
                 />
             )}

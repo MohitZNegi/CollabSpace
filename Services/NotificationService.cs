@@ -22,7 +22,8 @@ namespace CollabSpace.Services
 
         public async Task NotifyCardUpdatedAsync(
             Guid cardOwnerId, string cardTitle,
-            string updaterUsername, Guid cardId)
+            string updaterUsername, Guid cardId,
+            Guid boardId, Guid workspaceId)
         {
             // Do not notify the person who made the change.
             // Receiving a notification for your own action is noise.
@@ -30,40 +31,47 @@ namespace CollabSpace.Services
 
             await SaveAndPushAsync(
                 NotificationFactory.CardUpdated(
-                    cardOwnerId, cardTitle, updaterUsername, cardId));
+                    cardOwnerId, cardTitle, updaterUsername, cardId,
+                    boardId, workspaceId));
         }
 
         public async Task NotifyCardAssignedAsync(
             Guid assigneeId, string cardTitle,
-            string assignerUsername, Guid cardId)
+            string assignerUsername, Guid cardId,
+            Guid boardId, Guid workspaceId)
         {
             await SaveAndPushAsync(
                 NotificationFactory.CardAssigned(
-                    assigneeId, cardTitle, assignerUsername, cardId));
+                    assigneeId, cardTitle, assignerUsername, cardId,
+                    boardId, workspaceId));
         }
 
         public async Task NotifyCommentAddedAsync(
             Guid cardOwnerId, string cardTitle,
             string commenterUsername, Guid commentId,
-            Guid commentAuthorId)
+            Guid cardId, Guid commentAuthorId,
+            Guid boardId, Guid workspaceId)
         {
             // Do not notify the card owner if they wrote the comment themselves
             if (cardOwnerId == commentAuthorId) return;
 
             await SaveAndPushAsync(
                 NotificationFactory.CommentAdded(
-                    cardOwnerId, cardTitle, commenterUsername, commentId));
+                    cardOwnerId, cardTitle, commenterUsername, commentId,
+                    cardId,
+                    boardId, workspaceId));
         }
 
         public async Task NotifyMentionsAsync(
             List<Guid> mentionedUserIds, string mentionerUsername,
-            string cardTitle, Guid commentId)
+            string context, Guid referenceId,
+            string? navigationUrl = null)
         {
             // Create one notification per mentioned user.
             // SaveChangesAsync called once for all of them together.
             var notifications = mentionedUserIds
                 .Select(userId => NotificationFactory.Mention(
-                    userId, mentionerUsername, cardTitle, commentId))
+                    userId, mentionerUsername, context, referenceId, navigationUrl))
                 .ToList();
 
             _context.Notifications.AddRange(notifications);
@@ -162,6 +170,7 @@ namespace CollabSpace.Services
                 Type = n.Type,
                 Message = n.Message,
                 ReferenceId = n.ReferenceId,
+                NavigationUrl = n.NavigationUrl,
                 IsRead = n.IsRead,
                 CreatedAt = n.CreatedAt
             };

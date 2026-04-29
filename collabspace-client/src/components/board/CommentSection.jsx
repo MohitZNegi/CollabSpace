@@ -9,7 +9,7 @@ import CommentItem from './CommentItem';
 import { CommentSectionSkeleton } from '../loading/PageSkeletons';
 import '../../styles/components/comments.css';
 
-function CommentSection({ cardId }) {
+function CommentSection({ cardId, highlightedCommentId = null }) {
     const dispatch = useDispatch();
     const { user } = useSelector((s) => s.auth);
     const comments = useSelector(
@@ -96,6 +96,7 @@ function CommentSection({ cardId }) {
                             key={comment.id}
                             comment={comment}
                             cardId={cardId}
+                            highlightedCommentId={highlightedCommentId}
                             onCommentAdded={handleCommentAdded}
                             onCommentEdited={handleCommentEdited}
                             onCommentDeleted={handleCommentDeleted}
