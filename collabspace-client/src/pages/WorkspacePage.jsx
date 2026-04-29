@@ -248,10 +248,16 @@ function WorkspacePage() {
                     </div>
                 )}
 
-                {/* Activity feed */}
+                {/* Activity feed — compact and meaningful only */}
                 <div className="activity-feed">
                     <div className="activity-feed-header">
                         <h3 className="section-title">Recent Activity</h3>
+                        <span style={{
+                            fontSize: 'var(--font-size-sm)',
+                            color: 'var(--color-text-muted)'
+                        }}>
+                            Last {dashboard?.recentActivity?.length || 0} events
+                        </span>
                     </div>
                     <div className="activity-list">
                         {!dashboard?.recentActivity?.length ? (
@@ -262,13 +268,12 @@ function WorkspacePage() {
                             dashboard.recentActivity.map((item) => (
                                 <div key={item.id} className="activity-item">
                                     <div className={`activity-avatar ${item.actionType}`}>
-                                        {ACTION_ICONS[item.actionType]
-                                            || item.actorUsername[0]
-                                                .toUpperCase()}
+                                        {item.actorUsername[0].toUpperCase()}
                                     </div>
                                     <div className="activity-content">
                                         <p className="activity-description">
-                                            {item.description}
+                                            <strong>{item.actorUsername}</strong>
+                                            {' '}{item.description}
                                         </p>
                                         <span className="activity-time">
                                             {formatTime(item.createdAt)}
