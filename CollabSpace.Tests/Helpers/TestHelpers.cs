@@ -139,20 +139,24 @@ namespace CollabSpace.Tests.Helpers
             var mock = new Mock<INotificationService>();
             mock.Setup(m => m.NotifyCardUpdatedAsync(
                     It.IsAny<Guid>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<Guid>()))
+                    It.IsAny<string>(), It.IsAny<Guid>(),
+                    It.IsAny<Guid>(), It.IsAny<Guid>()))
                 .Returns(Task.CompletedTask);
             mock.Setup(m => m.NotifyCardAssignedAsync(
                     It.IsAny<Guid>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<Guid>()))
+                    It.IsAny<string>(), It.IsAny<Guid>(),
+                    It.IsAny<Guid>(), It.IsAny<Guid>()))
                 .Returns(Task.CompletedTask);
             mock.Setup(m => m.NotifyCommentAddedAsync(
                     It.IsAny<Guid>(), It.IsAny<string>(),
                     It.IsAny<string>(), It.IsAny<Guid>(),
+                    It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(),
                     It.IsAny<Guid>()))
                 .Returns(Task.CompletedTask);
             mock.Setup(m => m.NotifyMentionsAsync(
                     It.IsAny<List<Guid>>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<Guid>()))
+                    It.IsAny<string>(), It.IsAny<Guid>(),
+                    It.IsAny<string?>()))
                 .Returns(Task.CompletedTask);
             mock.Setup(m => m.NotifyMemberJoinedAsync(
                     It.IsAny<List<Guid>>(), It.IsAny<string>(),

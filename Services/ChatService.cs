@@ -11,11 +11,16 @@ namespace CollabSpace.Services
     {
         private readonly AppDbContext _context;
         private readonly IChatEventService _chatEvents;
+        private readonly INotificationService _notifications;
 
-        public ChatService(AppDbContext context, IChatEventService chatEvents)
+        public ChatService(
+            AppDbContext context,
+            IChatEventService chatEvents,
+            INotificationService notifications)
         {
             _context = context;
             _chatEvents = chatEvents;
+            _notifications = notifications;
         }
 
         // ---------------------------------------------------------------
@@ -53,6 +58,32 @@ namespace CollabSpace.Services
             await _chatEvents.BroadcastWorkspaceMessageAsync(
                 workspaceId.ToString(), dto);
 
+            var sender = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == senderId);
+
+            var mentionedUserIds = await ResolveMentionsAsync(
+                request.Content, workspaceId, senderId);
+
+            if (mentionedUserIds.Any() && sender != null)
+            {
+                var boardId = await _context.Boards
+                    .AsNoTracking()
+                    .Where(b => b.WorkspaceId == workspaceId && !b.IsArchived)
+                    .OrderBy(b => b.CreatedAt)
+                    .Select(b => (Guid?)b.Id)
+                    .FirstOrDefaultAsync();
+
+                await _notifications.NotifyMentionsAsync(
+                    mentionedUserIds,
+                    sender.Username,
+                    "chat in workspace",
+                    message.Id,
+                    boardId.HasValue
+                        ? $"/workspaces/{workspaceId}/boards/{boardId}?chatMessage={message.Id}"
+                        : $"/workspaces/{workspaceId}");
+            }
+
             return dto;
         }
 
@@ -63,6 +94,7 @@ namespace CollabSpace.Services
             await RequireWorkspaceMemberAsync(workspaceId, requestingUserId);
 
             var query = _context.Messages
+                .AsNoTracking()
                 .Where(m => m.WorkspaceId == workspaceId)
                 .Include(m => m.Sender)
                 .AsQueryable();
@@ -127,6 +159,7 @@ namespace CollabSpace.Services
 
             // Verify both users exist and are active
             var recipientExists = await _context.Users
+                .AsNoTracking()
                 .AnyAsync(u => u.Id == recipientId && u.IsActive);
 
             if (!recipientExists)
@@ -162,6 +195,7 @@ namespace CollabSpace.Services
             DateTime? before = null, int limit = 50)
         {
             var query = _context.DirectMessages
+                .AsNoTracking()
                 // Load messages in both directions between these two users
                 .Where(dm =>
                     (dm.SenderId == requestingUserId
@@ -208,12 +242,34 @@ namespace CollabSpace.Services
             Guid workspaceId, Guid userId)
         {
             var isMember = await _context.WorkspaceMembers
+                .AsNoTracking()
                 .AnyAsync(wm => wm.WorkspaceId == workspaceId
                              && wm.UserId == userId);
 
             if (!isMember)
                 throw new ForbiddenException(
                     "You are not a member of this workspace.");
+        }
+
+        private async Task<List<Guid>> ResolveMentionsAsync(
+            string content, Guid workspaceId, Guid senderId)
+        {
+            var words = content.Split(' ', '\n', '\r')
+                .Where(w => w.StartsWith('@') && w.Length > 1)
+                .Select(w => w.TrimStart('@').Trim())
+                .Distinct()
+                .ToList();
+
+            if (!words.Any()) return new List<Guid>();
+
+            return await _context.WorkspaceMembers
+                .AsNoTracking()
+                .Where(wm => wm.WorkspaceId == workspaceId
+                          && wm.UserId != senderId)
+                .Include(wm => wm.User)
+                .Where(wm => words.Contains(wm.User!.Username))
+                .Select(wm => wm.UserId)
+                .ToListAsync();
         }
 
         private static MessageResponseDto MapToMessageDto(Message m) => new()

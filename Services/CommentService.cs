@@ -5,7 +5,6 @@ using CollabSpace.Models.Constants;
 using CollabSpace.Models.DTOs.Comment;
 using CollabSpace.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
 
 namespace CollabSpace.Services
 {
@@ -29,6 +28,7 @@ namespace CollabSpace.Services
             Guid cardId, Guid requestingUserId)
         {
             var card = await _context.Cards
+                .AsNoTracking()
                 .Include(c => c.Board)
                 .FirstOrDefaultAsync(c => c.Id == cardId);
 
@@ -42,6 +42,7 @@ namespace CollabSpace.Services
             // including their authors. We build the tree in memory
             // rather than with multiple queries or recursive SQL.
             var allComments = await _context.Comments
+                .AsNoTracking()
                 .Where(c => c.CardId == cardId)
                 .Include(c => c.User)
                 .OrderBy(c => c.CreatedAt)
@@ -54,6 +55,7 @@ namespace CollabSpace.Services
             Guid cardId, CreateCommentDto request, Guid authorId)
         {
             var card = await _context.Cards
+                .AsNoTracking()
                 .Include(c => c.Board)
                 .FirstOrDefaultAsync(c => c.Id == cardId);
 
@@ -68,6 +70,7 @@ namespace CollabSpace.Services
             if (request.ParentCommentId.HasValue)
             {
                 var parentExists = await _context.Comments
+                    .AsNoTracking()
                     .AnyAsync(c => c.Id == request.ParentCommentId
                                 && c.CardId == cardId);
 
@@ -77,6 +80,7 @@ namespace CollabSpace.Services
             }
 
             var author = await _context.Users
+                .AsNoTracking()
                 .FirstAsync(u => u.Id == authorId);
 
             var comment = new Comment
@@ -92,11 +96,11 @@ namespace CollabSpace.Services
 
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
-            _ = _activity.RecordAsync(
-            card.Board!.WorkspaceId, authorId,
-            ActivityTypes.CommentAdded,
-            $"{author.Username} commented on \"{card.Title}\"",
-            comment.Id, "Comment");
+            await _activity.RecordAsync(
+                card.Board!.WorkspaceId, authorId,
+                ActivityTypes.CommentAdded,
+                $"{author.Username} commented on \"{card.Title}\"",
+                comment.Id, "Comment");
 
             // -------------------------------------------------------
             // NOTIFICATION TRIGGERS
@@ -110,7 +114,10 @@ namespace CollabSpace.Services
                     card.Title,
                     author.Username,
                     comment.Id,
-                    authorId);
+                    card.Id,
+                    authorId,
+                    card.Board.Id,
+                    card.Board.WorkspaceId);
             }
 
             // Parse @mentions from the comment content.
@@ -123,13 +130,23 @@ namespace CollabSpace.Services
                 await _notifications.NotifyMentionsAsync(
                     mentionedUserIds,
                     author.Username,
-                    card.Title,
-                    comment.Id);
+                    $"\"{card.Title}\"",
+                    comment.Id,
+                    $"/workspaces/{card.Board.WorkspaceId}/boards/{card.BoardId}?card={card.Id}&comment={comment.Id}");
             }
 
-            // Attach the author navigation property for the response
-            comment.User = author;
-            return MapToDto(comment);
+            return new CommentResponseDto
+            {
+                Id = comment.Id,
+                CardId = comment.CardId,
+                UserId = comment.UserId,
+                Username = author.Username,
+                AvatarUrl = author.AvatarUrl,
+                Content = comment.Content,
+                ParentCommentId = comment.ParentCommentId,
+                IsEdited = comment.IsEdited,
+                CreatedAt = comment.CreatedAt,
+            };
         }
 
         public async Task<CommentResponseDto> EditCommentAsync(
@@ -167,6 +184,7 @@ namespace CollabSpace.Services
 
             // Check if the requester is the author or a global Admin
             var requester = await _context.Users
+                .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Id == requestingUserId);
 
             var isAuthor = comment.UserId == requestingUserId;
@@ -229,6 +247,7 @@ namespace CollabSpace.Services
 
             // Find workspace members whose usernames match the mentions
             return await _context.WorkspaceMembers
+                .AsNoTracking()
                 .Where(wm => wm.WorkspaceId == workspaceId
                           && wm.UserId != authorId)
                 .Include(wm => wm.User)
@@ -241,6 +260,7 @@ namespace CollabSpace.Services
             Guid workspaceId, Guid userId)
         {
             var isMember = await _context.WorkspaceMembers
+                .AsNoTracking()
                 .AnyAsync(wm => wm.WorkspaceId == workspaceId
                              && wm.UserId == userId);
 

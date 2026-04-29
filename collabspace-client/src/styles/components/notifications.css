@@ -110,6 +110,10 @@
         background-color: var(--color-white);
     }
 
+    .notification-item.clickable:hover {
+        background-color: var(--color-light-blue);
+    }
+
     .notification-item:last-child {
         border-bottom: none;
     }

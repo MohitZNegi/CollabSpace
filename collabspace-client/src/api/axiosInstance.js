@@ -1,4 +1,8 @@
-﻿import axios from 'axios';
+import axios from 'axios';
+import {
+    beginGlobalRequest,
+    endGlobalRequest,
+} from '../utils/loadingManager';
 
 // One configured instance used everywhere in the app.
 // Never call axios.get() directly in components.
@@ -17,13 +21,25 @@ const axiosInstance = axios.create({
 // ever needs to manually add the token to a request.
 axiosInstance.interceptors.request.use(
     (config) => {
+        config.meta = config.meta || {};
+        config.meta.showGlobalLoader = config.meta.showGlobalLoader !== false;
+
+        if (config.meta.showGlobalLoader) {
+            beginGlobalRequest();
+        }
+
         const token = localStorage.getItem('accessToken');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
     },
-    (error) => Promise.reject(error)
+    (error) => {
+        if (error.config?.meta?.showGlobalLoader) {
+            endGlobalRequest();
+        }
+        return Promise.reject(error);
+    }
 );
 
 // RESPONSE INTERCEPTOR
@@ -33,8 +49,17 @@ axiosInstance.interceptors.request.use(
 // This handles token expiry globally without any component
 // needing to check for 401 errors themselves.
 axiosInstance.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        if (response.config?.meta?.showGlobalLoader) {
+            endGlobalRequest();
+        }
+        return response;
+    },
     (error) => {
+        if (error.config?.meta?.showGlobalLoader) {
+            endGlobalRequest();
+        }
+
         const isLoginRequest = error.config?.url?.includes('/auth/login')
             || error.config?.url?.includes('/auth/register');
 

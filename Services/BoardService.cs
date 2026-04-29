@@ -21,6 +21,7 @@ namespace CollabSpace.Services
         {
             // Verify the requesting user is a member of the workspace
             var isMember = await _context.WorkspaceMembers
+                .AsNoTracking()
                 .AnyAsync(wm => wm.WorkspaceId == workspaceId
                              && wm.UserId == requestingUserId);
 
@@ -29,6 +30,7 @@ namespace CollabSpace.Services
                     "You are not a member of this workspace.");
 
             return await _context.Boards
+                .AsNoTracking()
                 .Where(b => b.WorkspaceId == workspaceId && !b.IsArchived)
                 .Include(b => b.CreatedBy)
                 .OrderBy(b => b.CreatedAt)
@@ -40,6 +42,7 @@ namespace CollabSpace.Services
             Guid workspaceId, CreateBoardDto request, Guid createdByUserId)
         {
             var isMember = await _context.WorkspaceMembers
+                .AsNoTracking()
                 .AnyAsync(wm => wm.WorkspaceId == workspaceId
                              && wm.UserId == createdByUserId);
 
@@ -79,6 +82,7 @@ namespace CollabSpace.Services
 
             // Only Leads and Owners can archive boards — per your user stories
             var membership = await _context.WorkspaceMembers
+                .AsNoTracking()
                 .FirstOrDefaultAsync(wm => wm.WorkspaceId == board.WorkspaceId
                                         && wm.UserId == requestingUserId);
 

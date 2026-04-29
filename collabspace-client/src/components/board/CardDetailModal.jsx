@@ -3,7 +3,7 @@ import axiosInstance from '../../api/axiosInstance';
 import CommentSection from './CommentSection';
 
 
-function CardDetailModal({ card, onClose, onUpdated }) {
+function CardDetailModal({ card, onClose, onUpdated, highlightedCommentId = null }) {
     const [title, setTitle] = useState(card.title);
     const [description, setDescription] = useState(card.description || '');
     const [status, setStatus] = useState(card.status);
@@ -72,7 +72,10 @@ function CardDetailModal({ card, onClose, onUpdated }) {
                                 rows={4}
                             />
                         </div>
-                        <CommentSection cardId={card.id} />
+                        <CommentSection
+                            cardId={card.id}
+                            highlightedCommentId={highlightedCommentId}
+                        />
                     </div>
 
                     <div className="card-modal-sidebar">

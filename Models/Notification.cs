@@ -8,6 +8,7 @@ namespace CollabSpace.Models
         public required string Type { get; set; }
         public required string Message { get; set; }
         public Guid? ReferenceId { get; set; }
+        public string? NavigationUrl { get; set; }
         public bool IsRead { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

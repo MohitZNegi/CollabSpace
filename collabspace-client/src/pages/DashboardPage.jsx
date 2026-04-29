@@ -6,6 +6,7 @@ import { logout } from '../features/auth/authSlice';
 import axiosInstance from '../api/axiosInstance';
 import '../styles/components/dashboard.css';
 import NotificationBell from '../components/NotificationBell';
+import { DashboardPageSkeleton } from '../components/loading/PageSkeletons';
 
 
 function DashboardPage() {
@@ -105,6 +106,10 @@ function DashboardPage() {
         return `workspace-role-badge ${map[role] || 'role-member'}`;
     };
 
+    if (isLoadingWorkspaces) {
+        return <DashboardPageSkeleton />;
+    }
+
     return (
         <div className="dashboard-container">
 
@@ -152,11 +157,7 @@ function DashboardPage() {
                     </div>
                 </div>
 
-                {isLoadingWorkspaces ? (
-                    <p style={{ color: 'var(--color-text-muted)' }}>
-                        Loading workspaces...
-                    </p>
-                ) : workspaces.length === 0 ? (
+                {workspaces.length === 0 ? (
                     <div className="empty-state">
                         <p>You are not part of any workspace yet.</p>
                         <button
