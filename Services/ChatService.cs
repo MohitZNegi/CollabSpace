@@ -63,6 +63,7 @@ namespace CollabSpace.Services
             await RequireWorkspaceMemberAsync(workspaceId, requestingUserId);
 
             var query = _context.Messages
+                .AsNoTracking()
                 .Where(m => m.WorkspaceId == workspaceId)
                 .Include(m => m.Sender)
                 .AsQueryable();
@@ -127,6 +128,7 @@ namespace CollabSpace.Services
 
             // Verify both users exist and are active
             var recipientExists = await _context.Users
+                .AsNoTracking()
                 .AnyAsync(u => u.Id == recipientId && u.IsActive);
 
             if (!recipientExists)
@@ -162,6 +164,7 @@ namespace CollabSpace.Services
             DateTime? before = null, int limit = 50)
         {
             var query = _context.DirectMessages
+                .AsNoTracking()
                 // Load messages in both directions between these two users
                 .Where(dm =>
                     (dm.SenderId == requestingUserId
@@ -208,6 +211,7 @@ namespace CollabSpace.Services
             Guid workspaceId, Guid userId)
         {
             var isMember = await _context.WorkspaceMembers
+                .AsNoTracking()
                 .AnyAsync(wm => wm.WorkspaceId == workspaceId
                              && wm.UserId == userId);
 

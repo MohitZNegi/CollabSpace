@@ -12,6 +12,7 @@ import { useChatSignalR } from '../hooks/useChatSignalR';
 import BoardColumn from '../components/board/BoardColumn';
 import CardDetailModal from '../components/board/CardDetailModal';
 import ChatSidebar from '../components/chat/ChatSidebar';
+import { BoardPageSkeleton } from '../components/loading/PageSkeletons';
 import '../styles/components/board.css';
 
 // The three columns are defined as constants.
@@ -136,15 +137,7 @@ function BoardPage() {
     const { currentBoard } = useSelector((s) => s.board);
 
     if (isLoadingCards) {
-        return (
-            <div style={{
-                display: 'flex', alignItems: 'center',
-                justifyContent: 'center', height: '100vh',
-                color: 'var(--color-text-muted)'
-            }}>
-                Loading board...
-            </div>
-        );
+        return <BoardPageSkeleton />;
     }
 
     return (

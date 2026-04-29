@@ -6,6 +6,7 @@ import axiosInstance from '../api/axiosInstance';
 import NotificationBell from '../components/NotificationBell';
 import { logout } from '../features/auth/authSlice';
 import '../styles/components/workspace.css';
+import { WorkspacePageSkeleton } from '../components/loading/PageSkeletons';
 
 // Maps action types to readable icon initials for the avatar
 const ACTION_ICONS = {
@@ -139,17 +140,7 @@ function WorkspacePage() {
         });
 
     if (isLoading) {
-        return (
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100vh',
-                color: 'var(--color-text-muted)'
-            }}>
-                Loading workspace...
-            </div>
-        );
+        return <WorkspacePageSkeleton />;
     }
 
     return (

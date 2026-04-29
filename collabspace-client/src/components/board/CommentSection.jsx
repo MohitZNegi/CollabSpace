@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
     setComments, commentAdded,
-    commentEdited, commentDeleted
+    commentEdited, commentDeleted, setLoading
 } from '../../features/comments/commentSlice';
 import axiosInstance from '../../api/axiosInstance';
 import CommentItem from './CommentItem';
+import { CommentSectionSkeleton } from '../loading/PageSkeletons';
 import '../../styles/components/comments.css';
 
 function CommentSection({ cardId }) {
@@ -22,6 +23,7 @@ function CommentSection({ cardId }) {
     useEffect(() => {
         const load = async () => {
             try {
+                dispatch(setLoading(true));
                 const response = await axiosInstance.get(
                     `/cards/${cardId}/comments`);
                 dispatch(setComments({
@@ -30,6 +32,8 @@ function CommentSection({ cardId }) {
                 }));
             } catch (error) {
                 console.error('Failed to load comments:', error);
+            } finally {
+                dispatch(setLoading(false));
             }
         };
         load();
@@ -80,7 +84,7 @@ function CommentSection({ cardId }) {
             </span>
 
             {isLoading ? (
-                <p className="comment-empty">Loading comments...</p>
+                <CommentSectionSkeleton />
             ) : comments.length === 0 ? (
                 <p className="comment-empty">
                     No comments yet. Be the first to comment.
