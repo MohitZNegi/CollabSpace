@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CollabSpace.Services
 {
-    public class NotificationService : INotificationService
+    public class NotificationService : BaseService, INotificationService
     {
         private readonly AppDbContext _context;
         private readonly INotificationEventService _notificationEvents;
@@ -70,11 +70,11 @@ namespace CollabSpace.Services
             await _context.SaveChangesAsync();
 
             // Push each notification to its recipient via SignalR
-            var pushTasks = notifications.Select(n =>
-                _notificationEvents.PushNotificationAsync(
-                    n.RecipientUserId.ToString(), MapToDto(n)));
+            var pushOperations = notifications.Select(n =>
+                new Func<Task>(() => _notificationEvents.PushNotificationAsync(
+                    n.RecipientUserId.ToString(), MapToDto(n))));
 
-            await Task.WhenAll(pushTasks);
+            await ExecuteSequentiallyAsync(pushOperations);
         }
 
         public async Task NotifyMemberJoinedAsync(
@@ -89,11 +89,11 @@ namespace CollabSpace.Services
             _context.Notifications.AddRange(notifications);
             await _context.SaveChangesAsync();
 
-            var pushTasks = notifications.Select(n =>
-                _notificationEvents.PushNotificationAsync(
-                    n.RecipientUserId.ToString(), MapToDto(n)));
+            var pushOperations = notifications.Select(n =>
+                new Func<Task>(() => _notificationEvents.PushNotificationAsync(
+                    n.RecipientUserId.ToString(), MapToDto(n))));
 
-            await Task.WhenAll(pushTasks);
+            await ExecuteSequentiallyAsync(pushOperations);
         }
 
         public async Task NotifyMemberRemovedAsync(
@@ -108,6 +108,7 @@ namespace CollabSpace.Services
             Guid userId)
         {
             return await _context.Notifications
+                .AsNoTracking()
                 .Where(n => n.RecipientUserId == userId)
                 // Unread first, then most recent within each group
                 .OrderBy(n => n.IsRead)
@@ -132,6 +133,7 @@ namespace CollabSpace.Services
         public async Task<int> GetUnreadCountAsync(Guid userId)
         {
             return await _context.Notifications
+                .AsNoTracking()
                 .CountAsync(n => n.RecipientUserId == userId && !n.IsRead);
         }
 

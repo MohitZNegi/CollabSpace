@@ -32,6 +32,7 @@ namespace CollabSpace.Services
             Guid boardId, Guid requestingUserId)
         {
             var board = await _context.Boards
+                .AsNoTracking()
                 .FirstOrDefaultAsync(b => b.Id == boardId && !b.IsArchived);
 
             if (board == null)
@@ -44,6 +45,7 @@ namespace CollabSpace.Services
             // then InProgress cards in order, then Done cards in order.
             // The frontend splits them into columns by Status.
             return await _context.Cards
+                .AsNoTracking()
                 .Where(c => c.BoardId == boardId)
                 .Include(c => c.AssignedTo)
                 .Include(c => c.CreatedBy)
@@ -57,6 +59,7 @@ namespace CollabSpace.Services
             Guid boardId, CreateCardDto request, Guid createdByUserId)
         {
             var board = await _context.Boards
+                .AsNoTracking()
                 .FirstOrDefaultAsync(b => b.Id == boardId && !b.IsArchived);
 
             if (board == null)
@@ -72,6 +75,7 @@ namespace CollabSpace.Services
             // Max() returns null if no cards exist, so we use ?? -1
             // which means the first card gets position 0.
             var maxPosition = await _context.Cards
+                .AsNoTracking()
                 .Where(c => c.BoardId == boardId && c.Status == request.Status)
                 .MaxAsync(c => (int?)c.Position) ?? -1;
 
@@ -91,12 +95,17 @@ namespace CollabSpace.Services
             _context.Cards.Add(card);
             await _context.SaveChangesAsync();
 
-            var workspaceId = card.Board!.WorkspaceId;
-            _ = _activity.RecordAsync(
+            var workspaceId = board.WorkspaceId;
+            var creatorUsername = await _context.Users
+                .AsNoTracking()
+                .Where(u => u.Id == createdByUserId)
+                .Select(u => u.Username)
+                .FirstOrDefaultAsync();
+
+            await _activity.RecordAsync(
                 workspaceId, createdByUserId,
                 ActivityTypes.CardCreated,
-                $"{(await _context.Users.FindAsync(createdByUserId))?.Username} " +
-                $"created card \"{card.Title}\" in {card.Status}",
+                $"{creatorUsername} created card \"{card.Title}\" in {card.Status}",
                 card.Id, "Card");
 
             await _context.Entry(card).Reference(c => c.CreatedBy).LoadAsync();
@@ -136,6 +145,7 @@ namespace CollabSpace.Services
             if (request.AssignedToUserId.HasValue)
             {
                 var assigneeIsMember = await _context.WorkspaceMembers
+                    .AsNoTracking()
                     .AnyAsync(wm =>
                         wm.WorkspaceId == card.Board.WorkspaceId
                         && wm.UserId == request.AssignedToUserId.Value);
@@ -166,6 +176,7 @@ namespace CollabSpace.Services
             if (card.CreatedByUserId != requestingUserId)
             {
                 var requester = await _context.Users
+                    .AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Id == requestingUserId);
 
                 await _notifications.NotifyCardUpdatedAsync(
@@ -180,6 +191,7 @@ namespace CollabSpace.Services
                 && request.AssignedToUserId != requestingUserId)
             {
                 var requester = await _context.Users
+                    .AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Id == requestingUserId);
 
                 await _notifications.NotifyCardAssignedAsync(
@@ -290,11 +302,11 @@ namespace CollabSpace.Services
             // atomically. Positions are never inconsistent.
             await _context.SaveChangesAsync();
 
-            _ = _activity.RecordAsync(
-            card.Board!.WorkspaceId, requestingUserId,
-            ActivityTypes.CardMoved,
-            $"Card \"{card.Title}\" moved to {card.Status}",
-            card.Id, "Card");
+            await _activity.RecordAsync(
+                card.Board!.WorkspaceId, requestingUserId,
+                ActivityTypes.CardMoved,
+                $"Card \"{card.Title}\" moved to {card.Status}",
+                card.Id, "Card");
 
             // Broadcast a lightweight move event — just the essentials.
             // No need to send the full card object for a position change.
@@ -319,6 +331,7 @@ namespace CollabSpace.Services
                 throw new KeyNotFoundException("Card not found.");
 
             var membership = await _context.WorkspaceMembers
+                .AsNoTracking()
                 .FirstOrDefaultAsync(wm =>
                     wm.WorkspaceId == card.Board!.WorkspaceId
                     && wm.UserId == requestingUserId);
@@ -361,6 +374,7 @@ namespace CollabSpace.Services
             Guid workspaceId, Guid userId)
         {
             var isMember = await _context.WorkspaceMembers
+                .AsNoTracking()
                 .AnyAsync(wm => wm.WorkspaceId == workspaceId
                              && wm.UserId == userId);
 

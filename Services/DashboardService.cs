@@ -23,6 +23,7 @@ namespace CollabSpace.Services
             Guid workspaceId, Guid requestingUserId)
         {
             var isMember = await _context.WorkspaceMembers
+                .AsNoTracking()
                 .AnyAsync(wm => wm.WorkspaceId == workspaceId
                              && wm.UserId == requestingUserId);
 
@@ -55,6 +56,7 @@ namespace CollabSpace.Services
             // Count cards across all boards in this workspace
             // grouped by status in a single query
             var stats = await _context.Cards
+                .AsNoTracking()
                 .Where(c => c.Board!.WorkspaceId == workspaceId)
                 .GroupBy(c => c.Status)
                 .Select(g => new { Status = g.Key, Count = g.Count() })
@@ -83,6 +85,7 @@ namespace CollabSpace.Services
             var cutoff = DateTime.UtcNow.AddMinutes(-15);
 
             return await _context.WorkspaceMembers
+                .AsNoTracking()
                 .Where(wm => wm.WorkspaceId == workspaceId)
                 .Include(wm => wm.User)
                 .OrderByDescending(wm => wm.User!.LastSeenAt)

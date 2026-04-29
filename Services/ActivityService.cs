@@ -20,10 +20,6 @@ namespace CollabSpace.Services
             string actionType, string description,
             Guid? entityId = null, string? entityType = null)
         {
-            // Fire and forget pattern: we do not await this in
-            // the calling service so it does not slow down the
-            // primary operation. Activity logging is important
-            // but not critical to the user's immediate action.
             var activity = new ActivityLog
             {
                 Id = Guid.NewGuid(),
@@ -45,6 +41,7 @@ namespace CollabSpace.Services
         {
             // Verify membership before showing activity
             var isMember = await _context.WorkspaceMembers
+                .AsNoTracking()
                 .AnyAsync(wm => wm.WorkspaceId == workspaceId
                              && wm.UserId == requestingUserId);
 
@@ -53,6 +50,7 @@ namespace CollabSpace.Services
                     "You are not a member of this workspace.");
 
             return await _context.ActivityLogs
+                .AsNoTracking()
                 .Where(a => a.WorkspaceId == workspaceId)
                 .Include(a => a.Actor)
                 .OrderByDescending(a => a.CreatedAt)
