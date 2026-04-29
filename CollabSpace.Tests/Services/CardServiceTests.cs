@@ -127,6 +127,26 @@ namespace CollabSpace.Tests.Services
         }
 
         [Fact]
+        public async Task CreateCardAsync_UsesRequestedStatusAndColumnPosition()
+        {
+            var context = CreateContext();
+            var (userId, _, boardId) = await SeedBoardAsync(context);
+            var service = new CardService(context, CreateMockBoardEvents(), CreateMockNotifications(), CreateMockActivity());
+
+            await service.CreateCardAsync(boardId,
+                new CreateCardDto { Title = "Todo card", Status = "Todo" }, userId);
+
+            await service.CreateCardAsync(boardId,
+                new CreateCardDto { Title = "In Progress 1", Status = "InProgress" }, userId);
+
+            var secondInProgress = await service.CreateCardAsync(boardId,
+                new CreateCardDto { Title = "In Progress 2", Status = "InProgress" }, userId);
+
+            Assert.Equal("InProgress", secondInProgress.Status);
+            Assert.Equal(1, secondInProgress.Position);
+        }
+
+        [Fact]
         public async Task MoveCardAsync_UpdatesStatusAndPosition()
         {
             var context = CreateContext();

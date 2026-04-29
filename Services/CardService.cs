@@ -64,11 +64,15 @@ namespace CollabSpace.Services
 
             await RequireWorkspaceMemberAsync(board.WorkspaceId, createdByUserId);
 
-            // Calculate next position within the Todo column.
+            var validStatuses = new[] { "Todo", "InProgress", "Done" };
+            if (!validStatuses.Contains(request.Status))
+                request.Status = "Todo";
+
+            // Calculate next position within the target column.
             // Max() returns null if no cards exist, so we use ?? -1
             // which means the first card gets position 0.
             var maxPosition = await _context.Cards
-                .Where(c => c.BoardId == boardId && c.Status == "Todo")
+                .Where(c => c.BoardId == boardId && c.Status == request.Status)
                 .MaxAsync(c => (int?)c.Position) ?? -1;
 
             var card = new Card
@@ -77,7 +81,7 @@ namespace CollabSpace.Services
                 BoardId = boardId,
                 Title = request.Title.Trim(),
                 Description = request.Description?.Trim(),
-                Status = "Todo",
+                Status = request.Status,
                 Position = maxPosition + 1,
                 CreatedByUserId = createdByUserId,
                 CreatedAt = DateTime.UtcNow,
@@ -92,7 +96,7 @@ namespace CollabSpace.Services
                 workspaceId, createdByUserId,
                 ActivityTypes.CardCreated,
                 $"{(await _context.Users.FindAsync(createdByUserId))?.Username} " +
-                $"created card \"{card.Title}\"",
+                $"created card \"{card.Title}\" in {card.Status}",
                 card.Id, "Card");
 
             await _context.Entry(card).Reference(c => c.CreatedBy).LoadAsync();
