@@ -6,26 +6,32 @@ import ProtectedRoute from './components/ProtectedRoute';
 import BoardPage from './pages/BoardPage';
 import { useNotificationSignalR } from './hooks/useNotificationSignalR';
 import WorkspacePage from './pages/WorkspacePage';
+import LandingPage from './pages/LandingPage';
+import AboutPage from './pages/AboutPage';
 
 function AppRoutes() {
     return (
         <>
             <GlobalLoader />
-            <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route element={<ProtectedRoute />}>
-                    <Route path="/dashboard" element={<DashboardPage />} />
-                </Route>
-                <Route
-                    path="/workspaces/:workspaceId"
-                    element={<WorkspacePage />}
-                />
-                <Route
-                    path="/workspaces/:workspaceId/boards/:boardId"
-                    element={<BoardPage />}
-                />
-                <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
+                <Routes>
+                    {/* Public routes */}
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/about" element={<AboutPage />} />
+                    <Route path="/login" element={<LoginPage />} />
+
+                    {/* Protected routes */}
+                    <Route element={<ProtectedRoute />}>
+                        <Route path="/dashboard"
+                            element={<DashboardPage />} />
+                        <Route path="/workspaces/:workspaceId"
+                            element={<WorkspacePage />} />
+                        <Route
+                            path="/workspaces/:workspaceId/boards/:boardId"
+                            element={<BoardPage />} />
+                    </Route>
+
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>            
         </>
     );
 }
