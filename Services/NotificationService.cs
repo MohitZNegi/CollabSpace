@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CollabSpace.Services
 {
-    public class NotificationService : INotificationService
+    public class NotificationService : BaseService, INotificationService
     {
         private readonly AppDbContext _context;
         private readonly INotificationEventService _notificationEvents;
@@ -22,7 +22,8 @@ namespace CollabSpace.Services
 
         public async Task NotifyCardUpdatedAsync(
             Guid cardOwnerId, string cardTitle,
-            string updaterUsername, Guid cardId)
+            string updaterUsername, Guid cardId,
+            Guid boardId, Guid workspaceId)
         {
             // Do not notify the person who made the change.
             // Receiving a notification for your own action is noise.
@@ -30,51 +31,58 @@ namespace CollabSpace.Services
 
             await SaveAndPushAsync(
                 NotificationFactory.CardUpdated(
-                    cardOwnerId, cardTitle, updaterUsername, cardId));
+                    cardOwnerId, cardTitle, updaterUsername, cardId,
+                    boardId, workspaceId));
         }
 
         public async Task NotifyCardAssignedAsync(
             Guid assigneeId, string cardTitle,
-            string assignerUsername, Guid cardId)
+            string assignerUsername, Guid cardId,
+            Guid boardId, Guid workspaceId)
         {
             await SaveAndPushAsync(
                 NotificationFactory.CardAssigned(
-                    assigneeId, cardTitle, assignerUsername, cardId));
+                    assigneeId, cardTitle, assignerUsername, cardId,
+                    boardId, workspaceId));
         }
 
         public async Task NotifyCommentAddedAsync(
             Guid cardOwnerId, string cardTitle,
             string commenterUsername, Guid commentId,
-            Guid commentAuthorId)
+            Guid cardId, Guid commentAuthorId,
+            Guid boardId, Guid workspaceId)
         {
             // Do not notify the card owner if they wrote the comment themselves
             if (cardOwnerId == commentAuthorId) return;
 
             await SaveAndPushAsync(
                 NotificationFactory.CommentAdded(
-                    cardOwnerId, cardTitle, commenterUsername, commentId));
+                    cardOwnerId, cardTitle, commenterUsername, commentId,
+                    cardId,
+                    boardId, workspaceId));
         }
 
         public async Task NotifyMentionsAsync(
             List<Guid> mentionedUserIds, string mentionerUsername,
-            string cardTitle, Guid commentId)
+            string context, Guid referenceId,
+            string? navigationUrl = null)
         {
             // Create one notification per mentioned user.
             // SaveChangesAsync called once for all of them together.
             var notifications = mentionedUserIds
                 .Select(userId => NotificationFactory.Mention(
-                    userId, mentionerUsername, cardTitle, commentId))
+                    userId, mentionerUsername, context, referenceId, navigationUrl))
                 .ToList();
 
             _context.Notifications.AddRange(notifications);
             await _context.SaveChangesAsync();
 
             // Push each notification to its recipient via SignalR
-            var pushTasks = notifications.Select(n =>
-                _notificationEvents.PushNotificationAsync(
-                    n.RecipientUserId.ToString(), MapToDto(n)));
+            var pushOperations = notifications.Select(n =>
+                new Func<Task>(() => _notificationEvents.PushNotificationAsync(
+                    n.RecipientUserId.ToString(), MapToDto(n))));
 
-            await Task.WhenAll(pushTasks);
+            await ExecuteSequentiallyAsync(pushOperations);
         }
 
         public async Task NotifyMemberJoinedAsync(
@@ -89,11 +97,11 @@ namespace CollabSpace.Services
             _context.Notifications.AddRange(notifications);
             await _context.SaveChangesAsync();
 
-            var pushTasks = notifications.Select(n =>
-                _notificationEvents.PushNotificationAsync(
-                    n.RecipientUserId.ToString(), MapToDto(n)));
+            var pushOperations = notifications.Select(n =>
+                new Func<Task>(() => _notificationEvents.PushNotificationAsync(
+                    n.RecipientUserId.ToString(), MapToDto(n))));
 
-            await Task.WhenAll(pushTasks);
+            await ExecuteSequentiallyAsync(pushOperations);
         }
 
         public async Task NotifyMemberRemovedAsync(
@@ -108,6 +116,7 @@ namespace CollabSpace.Services
             Guid userId)
         {
             return await _context.Notifications
+                .AsNoTracking()
                 .Where(n => n.RecipientUserId == userId)
                 // Unread first, then most recent within each group
                 .OrderBy(n => n.IsRead)
@@ -132,6 +141,7 @@ namespace CollabSpace.Services
         public async Task<int> GetUnreadCountAsync(Guid userId)
         {
             return await _context.Notifications
+                .AsNoTracking()
                 .CountAsync(n => n.RecipientUserId == userId && !n.IsRead);
         }
 
@@ -160,6 +170,7 @@ namespace CollabSpace.Services
                 Type = n.Type,
                 Message = n.Message,
                 ReferenceId = n.ReferenceId,
+                NavigationUrl = n.NavigationUrl,
                 IsRead = n.IsRead,
                 CreatedAt = n.CreatedAt
             };

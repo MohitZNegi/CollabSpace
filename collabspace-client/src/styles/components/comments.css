@@ -24,7 +24,16 @@
     display: flex;
     gap: 0.6rem;
     align-items: flex-start;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
 }
+
+    .comment-item.highlighted {
+        background: rgba(214, 228, 240, 0.55);
+        box-shadow: 0 0 0 1px rgba(46, 95, 163, 0.18);
+        padding: 0.35rem 0.45rem;
+        margin: 0 -0.45rem;
+    }
 
     /* Indent replies visually to show nesting */
     .comment-item.reply {

@@ -7,9 +7,11 @@ const formatTime = (timestamp) => {
     });
 };
 
-function MessageBubble({ message, isOwn }) {
+function MessageBubble({ message, isOwn, isHighlighted = false }) {
     return (
-        <div className={`message-bubble ${isOwn ? 'own' : 'other'}`}>
+        <div className={`message-bubble ${isOwn ? 'own' : 'other'} ${
+            isHighlighted ? 'highlighted' : ''
+        }`}>
             {!isOwn && (
                 <span className="message-sender">
                     {message.senderUsername}

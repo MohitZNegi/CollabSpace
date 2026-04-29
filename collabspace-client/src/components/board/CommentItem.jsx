@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import axiosInstance from '../../api/axiosInstance';
 import '../../styles/components/comments.css';
@@ -7,9 +7,11 @@ import '../../styles/components/comments.css';
 // each of its replies as nested CommentItem components.
 // This recursion naturally handles any depth of threading.
 function CommentItem({ comment, cardId, onCommentAdded,
-    onCommentEdited, onCommentDeleted, isReply = false }) {
+    onCommentEdited, onCommentDeleted, highlightedCommentId = null,
+    isReply = false }) {
 
     const { user } = useSelector((s) => s.auth);
+    const commentRef = useRef(null);
     const [showReply, setShowReply] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [replyContent, setReplyContent] = useState('');
@@ -18,6 +20,16 @@ function CommentItem({ comment, cardId, onCommentAdded,
 
     const isOwn = comment.userId === user?.id;
     const isAdmin = user?.globalRole === 'Admin';
+    const isHighlighted = highlightedCommentId === comment.id;
+
+    useEffect(() => {
+        if (isHighlighted) {
+            commentRef.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
+        }
+    }, [isHighlighted]);
 
     const formatTime = (timestamp) => {
         const diff = Math.floor(
@@ -80,7 +92,12 @@ function CommentItem({ comment, cardId, onCommentAdded,
 
     return (
         <div>
-            <div className={`comment-item ${isReply ? 'reply' : ''}`}>
+            <div
+                ref={commentRef}
+                className={`comment-item ${isReply ? 'reply' : ''} ${
+                    isHighlighted ? 'highlighted' : ''
+                }`}
+            >
                 <div className="comment-avatar">
                     {comment.username[0].toUpperCase()}
                 </div>
@@ -233,6 +250,7 @@ function CommentItem({ comment, cardId, onCommentAdded,
                     onCommentAdded={onCommentAdded}
                     onCommentEdited={onCommentEdited}
                     onCommentDeleted={onCommentDeleted}
+                    highlightedCommentId={highlightedCommentId}
                     isReply={true}
                 />
             ))}

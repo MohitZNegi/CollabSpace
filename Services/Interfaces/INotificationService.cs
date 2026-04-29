@@ -8,20 +8,24 @@ namespace CollabSpace.Services.Interfaces
         // Called from other services after their primary operation succeeds.
         Task NotifyCardUpdatedAsync(
             Guid cardOwnerId, string cardTitle,
-            string updaterUsername, Guid cardId);
+            string updaterUsername, Guid cardId,
+            Guid boardId, Guid workspaceId);
 
         Task NotifyCardAssignedAsync(
             Guid assigneeId, string cardTitle,
-            string assignerUsername, Guid cardId);
+            string assignerUsername, Guid cardId,
+            Guid boardId, Guid workspaceId);
 
         Task NotifyCommentAddedAsync(
             Guid cardOwnerId, string cardTitle,
             string commenterUsername, Guid commentId,
-            Guid commentAuthorId);
+            Guid cardId, Guid commentAuthorId,
+            Guid boardId, Guid workspaceId);
 
         Task NotifyMentionsAsync(
             List<Guid> mentionedUserIds, string mentionerUsername,
-            string cardTitle, Guid commentId);
+            string context, Guid referenceId,
+            string? navigationUrl = null);
 
         Task NotifyMemberJoinedAsync(
             List<Guid> existingMemberIds, string newMemberUsername,

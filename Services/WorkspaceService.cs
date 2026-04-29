@@ -5,11 +5,10 @@ using CollabSpace.Models.Constants;
 using CollabSpace.Models.DTOs.WorkSpace;
 using CollabSpace.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
 
 namespace CollabSpace.Services
 {
-    public class WorkspaceService : IWorkspaceService
+    public class WorkspaceService : BaseService, IWorkspaceService
     {
         private readonly AppDbContext _context;
         private readonly IActivityService _activity;
@@ -63,6 +62,7 @@ namespace CollabSpace.Services
             // in a complex joined query above because the code is
             // cleaner and this endpoint is not performance-critical.
             var owner = await _context.Users
+                .AsNoTracking()
                 .FirstAsync(u => u.Id == ownerId);
 
             return MapToResponseDto(workspace, owner.Username);
@@ -74,6 +74,7 @@ namespace CollabSpace.Services
             // Load the workspace and its owner together in one query.
             // .Include() tells EF Core to JOIN the Users table.
             var workspace = await _context.Workspaces
+                .AsNoTracking()
                 .Include(w => w.Owner)
                 .FirstOrDefaultAsync(w => w.Id == workspaceId
                                        && !w.IsArchived);
@@ -83,6 +84,7 @@ namespace CollabSpace.Services
 
             // Check membership. Throws ForbiddenException if not a member.
             var isMember = await _context.WorkspaceMembers
+                .AsNoTracking()
                 .AnyAsync(wm => wm.WorkspaceId == workspaceId
                              && wm.UserId == requestingUserId);
 
@@ -100,6 +102,7 @@ namespace CollabSpace.Services
             // ThenInclude lets you chain includes: WorkspaceMembers
             // -> Workspace -> Owner (two levels deep).
             return await _context.WorkspaceMembers
+                .AsNoTracking()
                 .Where(wm => wm.UserId == userId)
                 .Include(wm => wm.Workspace)
                     .ThenInclude(w => w!.Owner)
@@ -113,6 +116,7 @@ namespace CollabSpace.Services
             string inviteCode, Guid userId)
         {
             var workspace = await _context.Workspaces
+                .AsNoTracking()
                 .Include(w => w.Owner)
                 .FirstOrDefaultAsync(w => w.InviteCode == inviteCode.ToUpper()
                                        && !w.IsArchived);
@@ -127,6 +131,7 @@ namespace CollabSpace.Services
             // This is called an idempotent operation: calling it
             // multiple times produces the same result as calling it once.
             var alreadyMember = await _context.WorkspaceMembers
+                .AsNoTracking()
                 .AnyAsync(wm => wm.WorkspaceId == workspace.Id
                              && wm.UserId == userId);
 
@@ -145,12 +150,17 @@ namespace CollabSpace.Services
             _context.WorkspaceMembers.Add(membership);
             await _context.SaveChangesAsync();
 
-            _ = _activity.RecordAsync(
-            workspace.Id, userId,
-            ActivityTypes.MemberJoined,
-            $"{(await _context.Users.FindAsync(userId))?.Username} " +
-            $"joined {workspace.Name}",
-            workspace.Id, "Workspace");
+            var username = await _context.Users
+                .AsNoTracking()
+                .Where(u => u.Id == userId)
+                .Select(u => u.Username)
+                .FirstOrDefaultAsync();
+
+            await _activity.RecordAsync(
+                workspace.Id, userId,
+                ActivityTypes.MemberJoined,
+                $"{username} joined {workspace.Name}",
+                workspace.Id, "Workspace");
 
             return MapToResponseDto(workspace, workspace.Owner!.Username);
         }
@@ -159,6 +169,7 @@ namespace CollabSpace.Services
             Guid workspaceId, Guid requestingUserId)
         {
             var isMember = await _context.WorkspaceMembers
+                .AsNoTracking()
                 .AnyAsync(wm => wm.WorkspaceId == workspaceId
                              && wm.UserId == requestingUserId);
 
@@ -170,6 +181,7 @@ namespace CollabSpace.Services
             // We project directly into the DTO using Select to avoid
             // loading unnecessary columns from the database.
             return await _context.WorkspaceMembers
+                .AsNoTracking()
                 .Where(wm => wm.WorkspaceId == workspaceId)
                 .Include(wm => wm.User)
                 .OrderBy(wm => wm.WorkspaceRole)
@@ -297,7 +309,9 @@ namespace CollabSpace.Services
                 code = new string(bytes.Select(b => chars[b % chars.Length])
                     .ToArray());
             }
-            while (await _context.Workspaces.AnyAsync(w => w.InviteCode == code));
+            while (await _context.Workspaces
+                .AsNoTracking()
+                .AnyAsync(w => w.InviteCode == code));
 
             return code;
         }

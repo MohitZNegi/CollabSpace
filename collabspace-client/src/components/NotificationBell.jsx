@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
     setNotifications,
@@ -8,6 +9,7 @@ import axiosInstance from '../api/axiosInstance';
 import '../styles/components/notifications.css';
 
 function NotificationBell() {
+    const navigate = useNavigate();
     const dispatch = useDispatch();
     const { items, unreadCount } = useSelector((s) => s.notifications);
     const [isOpen, setIsOpen] = useState(false);
@@ -41,6 +43,22 @@ function NotificationBell() {
             dispatch(allMarkedAsRead());
         } catch (error) {
             console.error('Failed to mark as read:', error);
+        }
+    };
+
+    const handleNotificationClick = async (notification) => {
+        if (!notification.isRead) {
+            try {
+                await axiosInstance.patch('/notifications/read-all');
+                dispatch(allMarkedAsRead());
+            } catch (error) {
+                console.error('Failed to mark as read:', error);
+            }
+        }
+
+        if (notification.navigationUrl) {
+            setIsOpen(false);
+            navigate(notification.navigationUrl);
         }
     };
 
@@ -92,8 +110,17 @@ function NotificationBell() {
                             items.map((notification) => (
                                 <div
                                     key={notification.id}
-                                    className={`notification-item ${notification.isRead ? 'read' : 'unread'
-                                        }`}
+                                    className={`notification-item ${
+                                        notification.isRead ? 'read' : 'unread'
+                                    } ${
+                                        notification.navigationUrl ? 'clickable' : ''
+                                    }`}
+                                    onClick={() => handleNotificationClick(notification)}
+                                    style={{
+                                        cursor: notification.navigationUrl
+                                            ? 'pointer'
+                                            : 'default'
+                                    }}
                                 >
                                     <div className={`notification-dot ${notification.isRead ? 'read' : 'unread'
                                         }`} />
