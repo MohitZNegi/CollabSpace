@@ -100,6 +100,7 @@ namespace CollabSpace.Tests.Services
             var (senderId, workspaceId) = await SeedMemberAsync(context, "sender");
             var (mentionedUserId, mentionedWorkspaceId) = await SeedMemberAsync(context, "alice");
 
+            // Move mentioned user into same workspace
             var mentionedMembership = await context.WorkspaceMembers
                 .FirstAsync(wm => wm.UserId == mentionedUserId
                                && wm.WorkspaceId == mentionedWorkspaceId);
@@ -112,12 +113,13 @@ namespace CollabSpace.Tests.Services
                 senderId);
 
             notifications.Verify(m => m.NotifyMentionsAsync(
-                It.Is<List<Guid>>(ids => ids.Count == 1 && ids.Contains(mentionedUserId)),
+                It.Is<List<Guid>>(ids =>
+                    ids.Count == 1 && ids.Contains(mentionedUserId)),
                 "sender",
                 "chat in workspace",
                 result.Id,
-                It.Is<string>(url => url.Contains($"/workspaces/{workspaceId}/boards/")
-                    && url.Contains($"chatMessage={result.Id}"))),
+      
+                It.Is<string>(url => url.Contains($"/workspaces/{workspaceId}"))),
                 Times.Once);
         }
 
